@@ -4,23 +4,29 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Stock Inventory</title>
   <style>
-    body{margin:0;font:18px system-ui;background:#fff;color:#111}
-    header{position:sticky;top:0;background:#f9fafb;padding:12px;border-bottom:1px solid #e5e7eb}
-    .wrap{max-width:900px;margin:auto;padding:16px}
-    h1{margin:0;font-size:24px}
-    .card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px}
-    label{display:block;margin:8px 0 4px;font-size:14px;color:#555}
-    input,select,button{font:inherit;font-size:16px;padding:8px;border-radius:8px;border:1px solid #ccc;width:100%}
-    button{cursor:pointer;color:#fff;margin-top:8px}
-    .btn.primary{background:#7c3aed}.btn.danger{background:#dc2626}
-    .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-    .chip{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:12px;background:#e5e7eb}
-    .list{display:grid;gap:10px}
-    .item{background:#f3f4f6;padding:12px;border-radius:12px}
-    .sizes{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-    .size{padding:4px 8px;background:#e5e7eb;border-radius:8px}
+    body{margin:0;font:18px system-ui;background:#0b0f19;color:#e6eefc}
+    header{position:sticky;top:0;background:rgba(11,15,25,.9);backdrop-filter:blur(8px);padding:14px;border-bottom:1px solid #2a3756}
+    .wrap{max-width:900px;margin:auto;padding:18px}
+    h1{margin:0;font-size:24px;color:#fff}
+    .card{background:#121826;border:1px solid #2a3756;border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 6px 16px rgba(0,0,0,.4)}
+    label{display:block;margin:8px 0 6px;font-size:14px;color:#c7d7ff}
+    input,select,button{font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid #2a3756;width:100%;background:#1b2335;color:#fff}
+    button{cursor:pointer;font-weight:600}
+    .btn.primary{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:0}
+    .btn.danger{background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;border:0}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .chip{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#22304b;color:#fff}
+    .chip strong{color:#fff}
+    .chip button{border:0;border-radius:6px;padding:6px 12px;font-size:18px;font-weight:700;cursor:pointer}
+    .chip button.plus{background:#22c55e;color:#fff}
+    .chip button.minus{background:#ef4444;color:#fff}
+    .list{display:grid;gap:12px}
+    .item{background:#0f1523;padding:12px;border-radius:12px;border:1px solid #2a3756}
+    .sizes{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .size{padding:6px 10px;border-radius:999px;background:#22304b}
     #editorSection{display:none;margin-top:20px}
-    .reorder{display:flex;gap:8px;margin:8px 0}
+    .reorder{display:flex;gap:10px;margin:8px 0}
+    #empty{color:#9bb0d9}
   </style>
 </head>
 <body>
@@ -31,56 +37,100 @@
     <div id="empty">No items yet.</div>
   </section>
   <section class="card" id="passwordSection">
-    <h2>Admin Access</h2>
-    <label>Password</label><input type="password" id="passwordInput"><button class="btn primary" id="unlockBtn">Unlock</button>
+    <h2 style="color:#c7d7ff">Admin Access</h2>
+    <label>Password</label><input type="password" id="passwordInput">
+    <button class="btn primary" id="unlockBtn">Unlock</button>
   </section>
   <section class="card" id="editorSection">
-    <h2>Add / Edit Item</h2>
-    <label>Select Item</label><select id="itemSelect"><option value="">-- New Item --</option></select>
+    <h2 style="color:#c7d7ff">Add / Edit Item</h2>
+    <label>Select Item</label>
+    <select id="itemSelect"><option value="">-- New Item --</option></select>
     <div class="reorder"><button id="moveUpBtn">⬆️</button><button id="moveDownBtn">⬇️</button></div>
     <label>Brand</label><input id="brandInput">
     <label>Colour</label><input id="colorInput">
     <label>Style</label>
-    <select id="styleSelect"><option>softstyle</option><option>cotton</option><option>heavy cotton</option><option>ultra heavy</option><option>mid softstyle</option><option value="other">Other</option></select>
+    <select id="styleSelect">
+      <option>softstyle</option><option>cotton</option>
+      <option>heavy cotton</option><option>ultra heavy</option>
+      <option>mid softstyle</option><option value="other">Other</option>
+    </select>
     <input id="customStyleInput" placeholder="Custom style" style="display:none;margin-top:6px">
-    <label>Sizes & Stock</label><div class="chips" id="sizesChips"></div>
-    <div id="measurementsSection" style="display:none"><h3>Measurements</h3><div id="measurementInputs"></div></div>
-    <button class="btn primary" id="saveItemBtn">Save</button><button id="resetBtn">Reset</button><button class="btn danger" id="deleteBtn">Delete</button>
+    <label>Sizes & Stock</label>
+    <div class="chips" id="sizesChips"></div>
+    <div id="measurementsSection" style="display:none"><h3 style="color:#c7d7ff">Measurements</h3><div id="measurementInputs"></div></div>
+    <button class="btn primary" id="saveItemBtn">Save</button>
+    <button id="resetBtn" class="btn" style="background:#22c55e;color:#fff">Reset</button>
+    <button class="btn danger" id="deleteBtn">Delete</button>
   </section>
 </main>
-<template id="itemTmpl"><div class="item"><div><span class="color"></span> – <strong class="brand"></strong> <span class="note"></span></div><div class="sizes"></div></div></template>
+
+<template id="itemTmpl">
+  <div class="item">
+    <div><span class="color"></span> – <strong class="brand"></strong> <span class="note"></span></div>
+    <div class="sizes"></div>
+  </div>
+</template>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
+
 <script>
-const store={load(){this.items=JSON.parse(localStorage.getItem('tsi_items')||'[]')},save(){localStorage.setItem('tsi_items',JSON.stringify(this.items))},items:[]};
-const sizesDefault=["S","M","L","XL","2XL","3XL","4XL"];
-const el=id=>document.getElementById(id);
-let currentId=null,sizeMap={},measurements={};
+  // Your Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyCklSHKdm_sB83BsrDKuMzXddGgFi26w5w",
+    authDomain: "stock-2d5a3.firebaseapp.com",
+    projectId: "stock-2d5a3",
+    storageBucket: "stock-2d5a3.firebasestorage.app",
+    messagingSenderId: "419253323633",
+    appId: "1:419253323633:web:d6e4adca4d2464f320d8d0"
+  };
 
-el('unlockBtn').onclick=()=>{if(el('passwordInput').value==='sonny'){el('editorSection').style.display='block';el('passwordInput').value='';render();populateItemSelect();}else alert('Wrong password')};
-el('styleSelect').onchange=()=>{el('customStyleInput').style.display=el('styleSelect').value==='other'?'block':'none'};
+  // Init
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-function initSizeChips(initial={}){el('sizesChips').innerHTML='';sizeMap={};sizesDefault.forEach(s=>{sizeMap[s]=initial[s]||0;const d=document.createElement('div');d.className='chip';d.innerHTML=`<strong>${s}</strong> <span class=qty>${sizeMap[s]}</span> <button data-delta=1>+</button> <button data-delta=-1>−</button>`;d.onclick=e=>{if(e.target.dataset.delta){sizeMap[s]=Math.max(0,sizeMap[s]+ +e.target.dataset.delta);d.querySelector('.qty').textContent=sizeMap[s];}};el('sizesChips').appendChild(d)});updateMeasurementsInputs(initial.measurements)}
+  const sizesDefault=["S","M","L","XL","2XL","3XL","4XL"];
+  const el=id=>document.getElementById(id);
+  let currentId=null,sizeMap={},measurements={};
 
-function updateMeasurementsInputs(initial={}){el('measurementInputs').innerHTML='';sizesDefault.forEach(s=>{const i=document.createElement('input');i.placeholder=s+' measurement';i.value=initial[s]||'';i.oninput=()=>{measurements[s]=i.value};el('measurementInputs').appendChild(i)});el('measurementsSection').style.display='block'}
+  // ===== CRUD functions with Firestore =====
+  async function loadItems(){
+    const snap=await db.collection("inventory").get();
+    return snap.docs.map(doc=>({...doc.data(),id:doc.id}));
+  }
+  async function saveItem(item){
+    if(item.id){
+      await db.collection("inventory").doc(item.id).set(item);
+    }else{
+      const ref=await db.collection("inventory").add(item);
+      item.id=ref.id;
+    }
+  }
+  async function deleteItem(id){await db.collection("inventory").doc(id).delete();}
 
-function populateItemSelect(){el('itemSelect').innerHTML='<option value="">-- New Item --</option>';store.items.forEach(it=>{let o=document.createElement('option');o.value=it.id;o.textContent=it.brand+' - '+it.color;el('itemSelect').appendChild(o)})}
+  // ===== UI =====
+  el("unlockBtn").onclick=()=>{if(el("passwordInput").value==="sonny"){el("editorSection").style.display="block";el("passwordInput").value="";render();}else alert("Wrong password")};
+  el("styleSelect").onchange=()=>{el("customStyleInput").style.display=el("styleSelect").value==="other"?"block":"none"};
 
-el('itemSelect').onchange=()=>{el('itemSelect').value?editItem(el('itemSelect').value):resetEditor()};
+  function initSizeChips(initial={}){el("sizesChips").innerHTML="";sizeMap={};sizesDefault.forEach(s=>{sizeMap[s]=initial[s]||0;const d=document.createElement("div");d.className="chip";d.innerHTML=`<strong>${s}</strong> <span class=qty>${sizeMap[s]}</span> <button class='plus' data-delta=1>+</button> <button class='minus' data-delta=-1>−</button>`;d.onclick=e=>{if(e.target.dataset.delta){sizeMap[s]=Math.max(0,sizeMap[s]+ +e.target.dataset.delta);d.querySelector(".qty").textContent=sizeMap[s];}};el("sizesChips").appendChild(d)});updateMeasurementsInputs(initial.measurements)}  
 
-function move(delta){if(!currentId)return;let i=store.items.findIndex(x=>x.id===currentId);let j=i+delta;if(j<0||j>=store.items.length)return;[store.items[i],store.items[j]]=[store.items[j],store.items[i]];store.save();populateItemSelect();el('itemSelect').value=currentId;render()}
-el('moveUpBtn').onclick=()=>move(-1);el('moveDownBtn').onclick=()=>move(1);
+  function updateMeasurementsInputs(initial={}){el("measurementInputs").innerHTML="";sizesDefault.forEach(s=>{const i=document.createElement("input");i.placeholder=s+" measurement";i.value=initial[s]||"";i.oninput=()=>{measurements[s]=i.value};el("measurementInputs").appendChild(i)});el("measurementsSection").style.display="block"}
 
-el('saveItemBtn').onclick=()=>{let b=el('brandInput').value.trim(),c=el('colorInput').value.trim();if(!b||!c)return alert('Need brand & colour');let st=el('styleSelect').value; if(st==='other') st=el('customStyleInput').value.trim()||'Other';let obj={id:currentId||crypto.randomUUID(),brand:b,color:c,style:st,sizes:{...sizeMap},measurements:{...measurements}};let idx=store.items.findIndex(i=>i.id===obj.id);idx>-1?store.items[idx]=obj:store.items.push(obj);store.save();resetEditor();render();populateItemSelect()}
+  async function render(){const items=await loadItems();el("list").innerHTML="";if(!items.length){el("empty").style.display="block";return}else el("empty").style.display="none";el("itemSelect").innerHTML="<option value=''>-- New Item --</option>";items.forEach(it=>{el("itemSelect").innerHTML+=`<option value='${it.id}'>${it.color} – ${it.brand} (${it.style})</option>`;el("list").appendChild(renderItem(it))})}
 
-el('resetBtn').onclick=resetEditor;el('deleteBtn').onclick=()=>{if(currentId&&confirm('Delete?')){store.items=store.items.filter(i=>i.id!==currentId);store.save();resetEditor();render();populateItemSelect()}};
+  function renderItem(it){let n=el("itemTmpl").content.firstElementChild.cloneNode(true);n.dataset.id=it.id;n.querySelector(".brand").textContent=it.brand;n.querySelector(".color").textContent=it.color;n.querySelector(".note").textContent=it.style?`(${it.style})`:'';let s=n.querySelector(".sizes");Object.entries(it.sizes).forEach(([k,v])=>{let d=document.createElement("div");d.className="size";d.textContent=`${k}: ${v}`;s.appendChild(d)});if(it.measurements){let m=document.createElement("div");m.style.marginTop="6px";m.textContent="Measurements: "+Object.entries(it.measurements).map(([k,v])=>`${k}: ${v}`).join(", ");n.appendChild(m)}return n}
 
-function resetEditor(){currentId=null;el('brandInput').value=el('colorInput').value=el('customStyleInput').value='';el('styleSelect').value='softstyle';el('customStyleInput').style.display='none';measurements={};initSizeChips();el('itemSelect').value=''}
+  async function editItem(id){const doc=await db.collection("inventory").doc(id).get();if(!doc.exists)return;const it=doc.data();it.id=doc.id;currentId=it.id;el("brandInput").value=it.brand;el("colorInput").value=it.color;el("styleSelect").value=["softstyle","cotton","heavy cotton","ultra heavy","mid softstyle"].includes(it.style)?it.style:"other";if(el("styleSelect").value==="other"){el("customStyleInput").style.display="block";el("customStyleInput").value=it.style}else el("customStyleInput").style.display="none";measurements={...it.measurements};initSizeChips(it.sizes);updateMeasurementsInputs(it.measurements);el("itemSelect").value=it.id}
 
-function render(){el('list').innerHTML='';if(!store.items.length){el('empty').style.display='block';return}else el('empty').style.display='none';store.items.forEach(it=>el('list').appendChild(renderItem(it)))}
+  el("itemSelect").onchange=()=>{el("itemSelect").value?editItem(el("itemSelect").value):resetEditor()};
+  el("saveItemBtn").onclick=async()=>{let b=el("brandInput").value.trim(),c=el("colorInput").value.trim();if(!b||!c)return alert("Need brand & colour");let st=el("styleSelect").value;if(st==="other") st=el("customStyleInput").value.trim()||"Other";let obj={id:currentId,brand:b,color:c,style:st,sizes:{...sizeMap},measurements:{...measurements}};await saveItem(obj);resetEditor();render()};
+  el("resetBtn").onclick=resetEditor;
+  el("deleteBtn").onclick=async()=>{if(currentId&&confirm("Delete?")){await deleteItem(currentId);resetEditor();render()}};
 
-function renderItem(it){let n=el('itemTmpl').content.firstElementChild.cloneNode(true);n.dataset.id=it.id;n.querySelector('.brand').textContent=it.brand;n.querySelector('.color').textContent=it.color;n.querySelector('.note').textContent=it.style?`(${it.style})`:'';let s=n.querySelector('.sizes');Object.entries(it.sizes).forEach(([k,v])=>{let d=document.createElement('div');d.className='size';d.textContent=`${k}: ${v}`;s.appendChild(d)});if(it.measurements){let m=document.createElement('div');m.textContent='Measurements: '+Object.entries(it.measurements).map(([k,v])=>`${k}: ${v}`).join(', ');n.appendChild(m)}return n}
+  function resetEditor(){currentId=null;el("brandInput").value=el("colorInput").value=el("customStyleInput").value="";el("styleSelect").value="softstyle";el("customStyleInput").style.display="none";measurements={};initSizeChips();el("itemSelect").value=""}
 
-function editItem(id){let it=store.items.find(x=>x.id===id);if(!it)return;currentId=it.id;el('brandInput').value=it.brand;el('colorInput').value=it.color;el('styleSelect').value=['softstyle','cotton','heavy cotton','ultra heavy','mid softstyle'].includes(it.style)?it.style:'other';el('customStyleInput').style.display=el('styleSelect').value==='other'?'block':'none';if(el('styleSelect').value==='other')el('customStyleInput').value=it.style;measurements={...it.measurements};initSizeChips(it.sizes);updateMeasurementsInputs(it.measurements);el('itemSelect').value=it.id}
-
-store.load();initSizeChips();render();
+  render();
 </script>
-</body></html>
+</body>
+</html>
