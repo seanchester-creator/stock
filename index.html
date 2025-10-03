@@ -12,7 +12,9 @@
     label{display:block;margin:8px 0 6px;font-size:14px;color:#c7d7ff}
     input,select,button{font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid #2a3756;width:100%;background:#1b2335;color:#fff}
     button{cursor:pointer;font-weight:600}
-    .btn.primary{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:0}
+    .btn{display:inline-block;margin-top:10px}
+    .btn.primary{background:linear-gradient(135deg,#22d3ee,#60a5fa);color:#041224;border:0;font-size:18px;padding:12px 20px;border-radius:12px;box-shadow:0 6px 14px rgba(34,211,238,.3)}
+    .btn.primary:hover{opacity:0.95}
     .btn.danger{background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;border:0}
     .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
     .chip{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#22304b;color:#fff}
@@ -27,6 +29,7 @@
     #editorSection{display:none;margin-top:20px}
     .reorder{display:flex;gap:10px;margin:8px 0}
     #empty{color:#9bb0d9}
+    #adminBadge{display:none;background:#22c55e;color:#041224;font-weight:700;padding:6px 12px;border-radius:8px;margin-top:10px;text-align:center}
   </style>
 </head>
 <body>
@@ -41,6 +44,7 @@
     <label>Password</label><input type="password" id="passwordInput">
     <button class="btn primary" id="unlockBtn">Unlock</button>
   </section>
+  <div id="adminBadge">🔓 Admin Mode Active</div>
   <section class="card" id="editorSection">
     <h2 style="color:#c7d7ff">Add / Edit Item</h2>
     <label>Select Item</label>
@@ -76,7 +80,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
 
 <script>
-  // Your Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyCklSHKdm_sB83BsrDKuMzXddGgFi26w5w",
     authDomain: "stock-2d5a3.firebaseapp.com",
@@ -86,7 +89,6 @@
     appId: "1:419253323633:web:d6e4adca4d2464f320d8d0"
   };
 
-  // Init
   const app = firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
@@ -94,41 +96,156 @@
   const el=id=>document.getElementById(id);
   let currentId=null,sizeMap={},measurements={};
 
-  // ===== CRUD functions with Firestore =====
+  // Unlock admin once and hide password section
+  el("unlockBtn").onclick=()=>{
+    if(el("passwordInput").value==="sonny"){
+      el("editorSection").style.display="block";
+      document.getElementById("passwordSection").style.display="none";
+      document.getElementById("adminBadge").style.display="block";
+      render();
+    } else alert("Wrong password");
+  };
+
+  el("styleSelect").onchange=()=>{
+    el("customStyleInput").style.display=el("styleSelect").value==="other"?"block":"none"
+  };
+
+  function initSizeChips(initial={}){
+    el("sizesChips").innerHTML="";
+    sizeMap={};
+    sizesDefault.forEach(s=>{
+      sizeMap[s]=initial[s]||0;
+      const d=document.createElement("div");
+      d.className="chip";
+      d.innerHTML=`<strong>${s}</strong> <span class=qty>${sizeMap[s]}</span> 
+        <button class='plus' data-delta=1>+</button> 
+        <button class='minus' data-delta=-1>−</button>`;
+      d.onclick=e=>{
+        if(e.target.dataset.delta){
+          sizeMap[s]=Math.max(0,sizeMap[s]+ +e.target.dataset.delta);
+          d.querySelector(".qty").textContent=sizeMap[s];
+        }
+      };
+      el("sizesChips").appendChild(d)
+    });
+    updateMeasurementsInputs(initial.measurements)
+  }  
+
+  function updateMeasurementsInputs(initial={}){
+    el("measurementInputs").innerHTML="";
+    sizesDefault.forEach(s=>{
+      const i=document.createElement("input");
+      i.placeholder=s+" measurement";
+      i.value=initial[s]||"";
+      i.oninput=()=>{measurements[s]=i.value};
+      el("measurementInputs").appendChild(i)
+    });
+    el("measurementsSection").style.display="block"
+  }
+
   async function loadItems(){
     const snap=await db.collection("inventory").get();
-    return snap.docs.map(doc=>({...doc.data(),id:doc.id}));
+    return snap.docs.map(doc=>({...doc.data(),id:doc.id}))
   }
   async function saveItem(item){
     if(item.id){
-      await db.collection("inventory").doc(item.id).set(item);
+      await db.collection("inventory").doc(item.id).set(item)
     }else{
       const ref=await db.collection("inventory").add(item);
-      item.id=ref.id;
+      item.id=ref.id
     }
   }
-  async function deleteItem(id){await db.collection("inventory").doc(id).delete();}
+  async function deleteItem(id){
+    await db.collection("inventory").doc(id).delete()
+  }
 
-  // ===== UI =====
-  el("unlockBtn").onclick=()=>{if(el("passwordInput").value==="sonny"){el("editorSection").style.display="block";el("passwordInput").value="";render();}else alert("Wrong password")};
-  el("styleSelect").onchange=()=>{el("customStyleInput").style.display=el("styleSelect").value==="other"?"block":"none"};
+  async function render(){
+    const items=await loadItems();
+    el("list").innerHTML="";
+    if(!items.length){el("empty").style.display="block";return}
+    else el("empty").style.display="none";
+    el("itemSelect").innerHTML="<option value=''>-- New Item --</option>";
+    items.forEach(it=>{
+      el("itemSelect").innerHTML+=`<option value='${it.id}'>${it.color} – ${it.brand} (${it.style})</option>`;
+      el("list").appendChild(renderItem(it))
+    })
+  }
 
-  function initSizeChips(initial={}){el("sizesChips").innerHTML="";sizeMap={};sizesDefault.forEach(s=>{sizeMap[s]=initial[s]||0;const d=document.createElement("div");d.className="chip";d.innerHTML=`<strong>${s}</strong> <span class=qty>${sizeMap[s]}</span> <button class='plus' data-delta=1>+</button> <button class='minus' data-delta=-1>−</button>`;d.onclick=e=>{if(e.target.dataset.delta){sizeMap[s]=Math.max(0,sizeMap[s]+ +e.target.dataset.delta);d.querySelector(".qty").textContent=sizeMap[s];}};el("sizesChips").appendChild(d)});updateMeasurementsInputs(initial.measurements)}  
+  function renderItem(it){
+    let n=el("itemTmpl").content.firstElementChild.cloneNode(true);
+    n.dataset.id=it.id;
+    n.querySelector(".brand").textContent=it.brand;
+    n.querySelector(".color").textContent=it.color;
+    n.querySelector(".note").textContent=it.style?`(${it.style})`:'';
+    let s=n.querySelector(".sizes");
+    Object.entries(it.sizes||{}).forEach(([k,v])=>{
+      let d=document.createElement("div");
+      d.className="size";
+      d.textContent=`${k}: ${v}`;
+      s.appendChild(d)
+    });
+    if(it.measurements){
+      let m=document.createElement("div");
+      m.style.marginTop="6px";
+      m.textContent="Measurements: "+Object.entries(it.measurements).map(([k,v])=>`${k}: ${v}`).join(", ");
+      n.appendChild(m)
+    }
+    return n
+  }
 
-  function updateMeasurementsInputs(initial={}){el("measurementInputs").innerHTML="";sizesDefault.forEach(s=>{const i=document.createElement("input");i.placeholder=s+" measurement";i.value=initial[s]||"";i.oninput=()=>{measurements[s]=i.value};el("measurementInputs").appendChild(i)});el("measurementsSection").style.display="block"}
+  async function editItem(id){
+    const doc=await db.collection("inventory").doc(id).get();
+    if(!doc.exists)return;
+    const it=doc.data();it.id=doc.id;
+    currentId=it.id;
+    el("brandInput").value=it.brand||"";
+    el("colorInput").value=it.color||"";
+    el("styleSelect").value=["softstyle","cotton","heavy cotton","ultra heavy","mid softstyle"].includes(it.style)?it.style:"other";
+    if(el("styleSelect").value==="other"){
+      el("customStyleInput").style.display="block";
+      el("customStyleInput").value=it.style
+    }else el("customStyleInput").style.display="none";
+    measurements={...it.measurements};
+    initSizeChips(it.sizes);
+    updateMeasurementsInputs(it.measurements);
+    el("itemSelect").value=it.id
+  }
 
-  async function render(){const items=await loadItems();el("list").innerHTML="";if(!items.length){el("empty").style.display="block";return}else el("empty").style.display="none";el("itemSelect").innerHTML="<option value=''>-- New Item --</option>";items.forEach(it=>{el("itemSelect").innerHTML+=`<option value='${it.id}'>${it.color} – ${it.brand} (${it.style})</option>`;el("list").appendChild(renderItem(it))})}
+  el("itemSelect").onchange=()=>{
+    el("itemSelect").value?editItem(el("itemSelect").value):resetEditor()
+  };
 
-  function renderItem(it){let n=el("itemTmpl").content.firstElementChild.cloneNode(true);n.dataset.id=it.id;n.querySelector(".brand").textContent=it.brand;n.querySelector(".color").textContent=it.color;n.querySelector(".note").textContent=it.style?`(${it.style})`:'';let s=n.querySelector(".sizes");Object.entries(it.sizes).forEach(([k,v])=>{let d=document.createElement("div");d.className="size";d.textContent=`${k}: ${v}`;s.appendChild(d)});if(it.measurements){let m=document.createElement("div");m.style.marginTop="6px";m.textContent="Measurements: "+Object.entries(it.measurements).map(([k,v])=>`${k}: ${v}`).join(", ");n.appendChild(m)}return n}
+  el("saveItemBtn").onclick=async()=>{
+    let b=el("brandInput").value.trim(),
+        c=el("colorInput").value.trim();
+    if(!b||!c)return alert("Need brand & colour");
+    let st=el("styleSelect").value;
+    if(st==="other") st=el("customStyleInput").value.trim()||"Other";
+    let obj={id:currentId,brand:b,color:c,style:st,sizes:{...sizeMap},measurements:{...measurements}};
+    await saveItem(obj);
+    resetEditor();
+    render()
+  };
 
-  async function editItem(id){const doc=await db.collection("inventory").doc(id).get();if(!doc.exists)return;const it=doc.data();it.id=doc.id;currentId=it.id;el("brandInput").value=it.brand;el("colorInput").value=it.color;el("styleSelect").value=["softstyle","cotton","heavy cotton","ultra heavy","mid softstyle"].includes(it.style)?it.style:"other";if(el("styleSelect").value==="other"){el("customStyleInput").style.display="block";el("customStyleInput").value=it.style}else el("customStyleInput").style.display="none";measurements={...it.measurements};initSizeChips(it.sizes);updateMeasurementsInputs(it.measurements);el("itemSelect").value=it.id}
-
-  el("itemSelect").onchange=()=>{el("itemSelect").value?editItem(el("itemSelect").value):resetEditor()};
-  el("saveItemBtn").onclick=async()=>{let b=el("brandInput").value.trim(),c=el("colorInput").value.trim();if(!b||!c)return alert("Need brand & colour");let st=el("styleSelect").value;if(st==="other") st=el("customStyleInput").value.trim()||"Other";let obj={id:currentId,brand:b,color:c,style:st,sizes:{...sizeMap},measurements:{...measurements}};await saveItem(obj);resetEditor();render()};
   el("resetBtn").onclick=resetEditor;
-  el("deleteBtn").onclick=async()=>{if(currentId&&confirm("Delete?")){await deleteItem(currentId);resetEditor();render()}};
 
-  function resetEditor(){currentId=null;el("brandInput").value=el("colorInput").value=el("customStyleInput").value="";el("styleSelect").value="softstyle";el("customStyleInput").style.display="none";measurements={};initSizeChips();el("itemSelect").value=""}
+  el("deleteBtn").onclick=async()=>{
+    if(currentId&&confirm("Delete?")){
+      await deleteItem(currentId);
+      resetEditor();
+      render()
+    }
+  };
+
+  function resetEditor(){
+    currentId=null;
+    el("brandInput").value=el("colorInput").value=el("customStyleInput").value="";
+    el("styleSelect").value="softstyle";
+    el("customStyleInput").style.display="none";
+    measurements={};
+    initSizeChips();
+    el("itemSelect").value=""
+  }
 
   render();
 </script>
