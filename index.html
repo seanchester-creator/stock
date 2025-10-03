@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Stock Inventory</title>
+  <style>
+    body{margin:0;font:18px system-ui;background:#fff;color:#111}
+    header{position:sticky;top:0;background:#f9fafb;padding:12px;border-bottom:1px solid #e5e7eb}
+    .wrap{max-width:900px;margin:auto;padding:16px}
+    h1{margin:0;font-size:24px}
+    .card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px}
+    label{display:block;margin:8px 0 4px;font-size:14px;color:#555}
+    input,select,button{font:inherit;font-size:16px;padding:8px;border-radius:8px;border:1px solid #ccc;width:100%}
+    button{cursor:pointer;color:#fff;margin-top:8px}
+    .btn.primary{background:#7c3aed}.btn.danger{background:#dc2626}
+    .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .chip{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:12px;background:#e5e7eb}
+    .list{display:grid;gap:10px}
+    .item{background:#f3f4f6;padding:12px;border-radius:12px}
+    .sizes{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+    .size{padding:4px 8px;background:#e5e7eb;border-radius:8px}
+    #editorSection{display:none;margin-top:20px}
+    .reorder{display:flex;gap:8px;margin:8px 0}
+  </style>
+</head>
+<body>
+<header><h1>👕 Stock Inventory</h1></header>
+<main class="wrap">
+  <section class="card">
+    <div class="list" id="list"></div>
+    <div id="empty">No items yet.</div>
+  </section>
+  <section class="card" id="passwordSection">
+    <h2>Admin Access</h2>
+    <label>Password</label><input type="password" id="passwordInput"><button class="btn primary" id="unlockBtn">Unlock</button>
+  </section>
+  <section class="card" id="editorSection">
+    <h2>Add / Edit Item</h2>
+    <label>Select Item</label><select id="itemSelect"><option value="">-- New Item --</option></select>
+    <div class="reorder"><button id="moveUpBtn">⬆️</button><button id="moveDownBtn">⬇️</button></div>
+    <label>Brand</label><input id="brandInput">
+    <label>Colour</label><input id="colorInput">
+    <label>Style</label>
+    <select id="styleSelect"><option>softstyle</option><option>cotton</option><option>heavy cotton</option><option>ultra heavy</option><option>mid softstyle</option><option value="other">Other</option></select>
+    <input id="customStyleInput" placeholder="Custom style" style="display:none;margin-top:6px">
+    <label>Sizes & Stock</label><div class="chips" id="sizesChips"></div>
+    <div id="measurementsSection" style="display:none"><h3>Measurements</h3><div id="measurementInputs"></div></div>
+    <button class="btn primary" id="saveItemBtn">Save</button><button id="resetBtn">Reset</button><button class="btn danger" id="deleteBtn">Delete</button>
+  </section>
+</main>
+<template id="itemTmpl"><div class="item"><div><span class="color"></span> – <strong class="brand"></strong> <span class="note"></span></div><div class="sizes"></div></div></template>
+<script>
+const store={load(){this.items=JSON.parse(localStorage.getItem('tsi_items')||'[]')},save(){localStorage.setItem('tsi_items',JSON.stringify(this.items))},items:[]};
+const sizesDefault=["S","M","L","XL","2XL","3XL","4XL"];
+const el=id=>document.getElementById(id);
+let currentId=null,sizeMap={},measurements={};
+
+el('unlockBtn').onclick=()=>{if(el('passwordInput').value==='sonny'){el('editorSection').style.display='block';el('passwordInput').value='';render();populateItemSelect();}else alert('Wrong password')};
+el('styleSelect').onchange=()=>{el('customStyleInput').style.display=el('styleSelect').value==='other'?'block':'none'};
+
+function initSizeChips(initial={}){el('sizesChips').innerHTML='';sizeMap={};sizesDefault.forEach(s=>{sizeMap[s]=initial[s]||0;const d=document.createElement('div');d.className='chip';d.innerHTML=`<strong>${s}</strong> <span class=qty>${sizeMap[s]}</span> <button data-delta=1>+</button> <button data-delta=-1>−</button>`;d.onclick=e=>{if(e.target.dataset.delta){sizeMap[s]=Math.max(0,sizeMap[s]+ +e.target.dataset.delta);d.querySelector('.qty').textContent=sizeMap[s];}};el('sizesChips').appendChild(d)});updateMeasurementsInputs(initial.measurements)}
+
+function updateMeasurementsInputs(initial={}){el('measurementInputs').innerHTML='';sizesDefault.forEach(s=>{const i=document.createElement('input');i.placeholder=s+' measurement';i.value=initial[s]||'';i.oninput=()=>{measurements[s]=i.value};el('measurementInputs').appendChild(i)});el('measurementsSection').style.display='block'}
+
+function populateItemSelect(){el('itemSelect').innerHTML='<option value="">-- New Item --</option>';store.items.forEach(it=>{let o=document.createElement('option');o.value=it.id;o.textContent=it.brand+' - '+it.color;el('itemSelect').appendChild(o)})}
+
+el('itemSelect').onchange=()=>{el('itemSelect').value?editItem(el('itemSelect').value):resetEditor()};
+
+function move(delta){if(!currentId)return;let i=store.items.findIndex(x=>x.id===currentId);let j=i+delta;if(j<0||j>=store.items.length)return;[store.items[i],store.items[j]]=[store.items[j],store.items[i]];store.save();populateItemSelect();el('itemSelect').value=currentId;render()}
+el('moveUpBtn').onclick=()=>move(-1);el('moveDownBtn').onclick=()=>move(1);
+
+el('saveItemBtn').onclick=()=>{let b=el('brandInput').value.trim(),c=el('colorInput').value.trim();if(!b||!c)return alert('Need brand & colour');let st=el('styleSelect').value; if(st==='other') st=el('customStyleInput').value.trim()||'Other';let obj={id:currentId||crypto.randomUUID(),brand:b,color:c,style:st,sizes:{...sizeMap},measurements:{...measurements}};let idx=store.items.findIndex(i=>i.id===obj.id);idx>-1?store.items[idx]=obj:store.items.push(obj);store.save();resetEditor();render();populateItemSelect()}
+
+el('resetBtn').onclick=resetEditor;el('deleteBtn').onclick=()=>{if(currentId&&confirm('Delete?')){store.items=store.items.filter(i=>i.id!==currentId);store.save();resetEditor();render();populateItemSelect()}};
+
+function resetEditor(){currentId=null;el('brandInput').value=el('colorInput').value=el('customStyleInput').value='';el('styleSelect').value='softstyle';el('customStyleInput').style.display='none';measurements={};initSizeChips();el('itemSelect').value=''}
+
+function render(){el('list').innerHTML='';if(!store.items.length){el('empty').style.display='block';return}else el('empty').style.display='none';store.items.forEach(it=>el('list').appendChild(renderItem(it)))}
+
+function renderItem(it){let n=el('itemTmpl').content.firstElementChild.cloneNode(true);n.dataset.id=it.id;n.querySelector('.brand').textContent=it.brand;n.querySelector('.color').textContent=it.color;n.querySelector('.note').textContent=it.style?`(${it.style})`:'';let s=n.querySelector('.sizes');Object.entries(it.sizes).forEach(([k,v])=>{let d=document.createElement('div');d.className='size';d.textContent=`${k}: ${v}`;s.appendChild(d)});if(it.measurements){let m=document.createElement('div');m.textContent='Measurements: '+Object.entries(it.measurements).map(([k,v])=>`${k}: ${v}`).join(', ');n.appendChild(m)}return n}
+
+function editItem(id){let it=store.items.find(x=>x.id===id);if(!it)return;currentId=it.id;el('brandInput').value=it.brand;el('colorInput').value=it.color;el('styleSelect').value=['softstyle','cotton','heavy cotton','ultra heavy','mid softstyle'].includes(it.style)?it.style:'other';el('customStyleInput').style.display=el('styleSelect').value==='other'?'block':'none';if(el('styleSelect').value==='other')el('customStyleInput').value=it.style;measurements={...it.measurements};initSizeChips(it.sizes);updateMeasurementsInputs(it.measurements);el('itemSelect').value=it.id}
+
+store.load();initSizeChips();render();
+</script>
+</body></html>
