@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Stock Inventory</title>
+  <style>
+    :root{
+      --bg:#000;
+      --panel:#121212;
+      --muted:#181818;
+      --text:#ffffff;
+      --dim:#cfcfcf;
+      --border:#2a2a2a;
+      --cyan:#22d3ee;
+      --pink:#ffb6c1;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font:18px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;background:var(--bg);color:var(--text)}
+    header{position:sticky;top:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);padding:14px;border-bottom:1px solid var(--border);z-index:5}
+    .wrap{max-width:960px;margin:auto;padding:18px}
+    h1{margin:0;font-size:26px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px}
+    label{display:block;margin:10px 0 6px;font-size:15px;color:var(--dim)}
+    input,select,button{font:inherit;font-size:18px}
+    input,select,textarea{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--muted);color:var(--text);outline:none}
+    input:focus,select:focus{box-shadow:0 0 0 3px rgba(34,211,238,.25), 0 0 0 1px var(--cyan)}
+    button{cursor:pointer;border:0;border-radius:12px}
+    .btn{display:inline-block;padding:12px 18px;font-weight:700;margin-top:10px}
+    .btn.primary{background:linear-gradient(135deg,var(--cyan),#7dd3fc);color:#06141a;box-shadow:0 8px 20px rgba(34,211,238,.25)}
+    .btn.danger{background:linear-gradient(135deg,#ff86a1,var(--pink));color:#2a0a17}
+    .subtitle{color:var(--dim)}
+    #empty{color:#9a9a9a}
+    /* List */
+    .list{display:grid;gap:12px}
+    .item{background:#0d0d0d;border:1px solid var(--border);border-radius:12px;padding:14px}
+    .sizes{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .size{padding:6px 10px;border-radius:999px;background:#141414;border:1px solid var(--border)}
+    /* Editor */
+    #editorSection{display:none;margin-top:20px}
+    .reorder{display:flex;gap:10px;margin:8px 0}
+    .reorder button{padding:8px 12px;background:#141414;border:1px solid var(--border);color:var(--text)}
+    .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+    .chip{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:999px;background:#141414;border:1px solid var(--border)}
+    .chip strong{min-width:42px;text-align:center}
+    .chip .qty{min-width:34px;text-align:center}
+    .chip button{padding:10px 14px;border-radius:10px;font-size:20px;font-weight:900}
+    .chip button.plus{background:var(--cyan);color:#001317}
+    .chip button.minus{background:var(--pink);color:#2a0a17}
+    /* Admin badge & status */
+    #adminBadge{display:none;background:var(--cyan);color:#001317;font-weight:800;padding:8px 12px;border-radius:10px;margin:10px 0;display:none;inline-size:max-content}
+    #status{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;background:#111;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.35);z-index:20;display:none}
+    #status.ok{border-color:var(--cyan)}
+    #status.err{border-color:#ff6b6b}
+    /* Make admin form fields never get cut off on phones */
+    @media (max-width: 480px){
+      .btn{width:100%}
+      .reorder{flex-wrap:wrap}
+      .chip{width:100%;justify-content:space-between}
+    }
+  </style>
+</head>
+<body>
+<header><h1>👕 Stock Inventory</h1></header>
+<main class="wrap">
+  <section class="card">
+    <div class="list" id="list"></div>
+    <div id="empty">No items yet.</div>
+  </section>
+
+  <section class="card" id="passwordSection">
+    <h2 style="margin:0 0 8px">Admin Access</h2>
+    <label>Password</label>
+    <input type="password" id="passwordInput" placeholder="Enter password (sonny)">
+    <button class="btn primary" id="unlockBtn">Unlock</button>
+    <div class="subtitle" style="margin-top:6px">Editing is protected so customers can only view stock.</div>
+  </section>
+
+  <div id="adminBadge">🔓 Admin Mode</div>
+
+  <section class="card" id="editorSection">
+    <h2 style="margin:0 0 8px">Add / Edit Item</h2>
+    <label>Select Item</label>
+    <select id="itemSelect"><option value="">-- New Item --</option></select>
+
+    <div class="reorder">
+      <button id="moveUpBtn">⬆️ Move Up</button>
+      <button id="moveDownBtn">⬇️ Move Down</button>
+    </div>
+
+    <label>Brand</label>
+    <input id="brandInput" placeholder="e.g. Gildan">
+
+    <label>Colour</label>
+    <input id="colorInput" placeholder="e.g. Black">
+
+    <label>Style</label>
+    <select id="styleSelect">
+      <option>softstyle</option><option>cotton</option>
+      <option>heavy cotton</option><option>ultra heavy</option>
+      <option>mid softstyle</option><option value="other">Other</option>
+    </select>
+    <input id="customStyleInput" placeholder="Custom style" style="display:none;margin-top:8px">
+
+    <label>Sizes & Stock</label>
+    <div class="chips" id="sizesChips"></div>
+
+    <div id="measurementsSection" style="display:none">
+      <h3 style="margin:12px 0">Measurements</h3>
+      <div id="measurementInputs"></div>
+    </div>
+
+    <button class="btn primary" id="saveItemBtn">Save</button>
+    <button id="resetBtn" class="btn" style="background:var(--pink);color:#2a0a17">Reset</button>
+    <button class="btn danger" id="deleteBtn">Delete</button>
+  </section>
+</main>
+
+<div id="status"></div>
+
+<template id="itemTmpl">
+  <div class="item">
+    <div><span class="color"></span> – <strong class="brand"></strong> <span class="note"></span></div>
+    <div class="sizes"></div>
+  </div>
+</template>
+
+<!-- Firebase compat SDKs so firebase.initializeApp works -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCklSHKdm_sB83BsrDKuMzXddGgFi26w5w",
+    authDomain: "stock-2d5a3.firebaseapp.com",
+    projectId: "stock-2d5a3",
+    storageBucket: "stock-2d5a3.firebasestorage.app",
+    messagingSenderId: "419253323633",
+    appId: "1:419253323633:web:d6e4adca4d2464f320d8d0"
+  };
+
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  const sizesDefault=["S","M","L","XL","2XL","3XL","4XL"];
+  const el=id=>document.getElementById(id);
+  let currentId=null,sizeMap={},measurements={},cachedItems=[];
+
+  // small status helper
+  function showStatus(msg, type='ok', ms=2000){
+    const s=el('status'); s.textContent=msg; s.className=''; s.classList.add(type==='ok'?'ok':'err'); s.style.display='block';
+    clearTimeout(showStatus._t); showStatus._t=setTimeout(()=>s.style.display='none', ms);
+  }
+
+  // Admin unlock
+  el("unlockBtn").onclick=()=>{
+    if(el("passwordInput").value.trim()==="sonny"){
+      el("editorSection").style.display="block";
+      el("passwordSection").style.display="none";
+      el("adminBadge").style.display="inline-block";
+      resetEditor();   // ensure chips & fields are visible and initialized
+      render();
+      showStatus('Admin unlocked', 'ok');
+      window.scrollTo({top:0,behavior:'smooth'});
+    } else {
+      el("passwordInput").style.borderColor = '#ff6b6b';
+      showStatus('Wrong password', 'err');
+      setTimeout(()=>{el("passwordInput").style.borderColor='var(--border)';},1000);
+    }
+  };
+
+  el("styleSelect").onchange=()=>{
+    el("customStyleInput").style.display=el("styleSelect").value==="other"?"block":"none"
+  };
+
+  function initSizeChips(initial={}){
+    el("sizesChips").innerHTML="";
+    sizeMap={};
+    sizesDefault.forEach(s=>{
+      sizeMap[s]=initial[s]||0;
+      const d=document.createElement("div");
+      d.className="chip";
+      d.innerHTML=`<strong>${s}</strong> 
+        <button class='minus' data-delta=-1 aria-label='decrease'>−</button>
+        <span class=qty>${sizeMap[s]}</span>
+        <button class='plus' data-delta=1 aria-label='increase'>+</button>`;
+      d.onclick=e=>{
+        if(e.target && e.target.dataset && e.target.dataset.delta){
+          const delta = parseInt(e.target.dataset.delta,10) || 0;
+          sizeMap[s]=Math.max(0,(sizeMap[s]||0)+delta);
+          d.querySelector(".qty").textContent=sizeMap[s];
+        }
+      };
+      el("sizesChips").appendChild(d)
+    });
+    updateMeasurementsInputs(initial.measurements)
+  }  
+
+  function updateMeasurementsInputs(initial={}){
+    el("measurementInputs").innerHTML="";
+    sizesDefault.forEach(s=>{
+      const i=document.createElement("input");
+      i.placeholder=s+" measurement";
+      i.value=initial[s]||"";
+      i.oninput=()=>{measurements[s]=i.value};
+      el("measurementInputs").appendChild(i)
+    });
+    el("measurementsSection").style.display="block"
+  }
+
+  // Firestore data helpers
+  async function loadItems(){
+    try{
+      // Try ordered by 'order' field; fall back to unordered if field missing
+      let snap;
+      try{
+        snap = await db.collection("inventory").orderBy("order","asc").get();
+      }catch(e){
+        snap = await db.collection("inventory").get();
+      }
+      const items = snap.docs.map(doc=>({...doc.data(),id:doc.id}));
+      // If no 'order' on some docs, provide a stable client sort
+      items.sort((a,b)=> (a.order??0) - (b.order??0));
+      cachedItems = items;
+      return items;
+    }catch(err){
+      showStatus('Load failed: '+(err.message||err),'err',4000);
+      return [];
+    }
+  }
+
+  async function saveItem(item){
+    try{
+      if(!item.order) item.order = Date.now(); // default order = created time
+      if(item.id){
+        await db.collection("inventory").doc(item.id).set(item);
+      }else{
+        const ref=await db.collection("inventory").add(item);
+        item.id=ref.id;
+      }
+      showStatus('Saved','ok');
+    }catch(err){
+      showStatus('Save failed: '+(err.message||err),'err',4000);
+    }
+  }
+  async function deleteItem(id){
+    try{
+      await db.collection("inventory").doc(id).delete();
+      showStatus('Deleted','ok');
+    }catch(err){
+      showStatus('Delete failed: '+(err.message||err),'err',4000);
+    }
+  }
+
+  async function render(){
+    const items=await loadItems();
+    el("list").innerHTML="";
+    if(!items.length){el("empty").style.display="block";}
+    else el("empty").style.display="none";
+
+    // fill dropdown with full details
+    el("itemSelect").innerHTML="<option value=''>-- New Item --</option>";
+    items.forEach(it=>{
+      el("itemSelect").innerHTML+=`<option value='${it.id}'>${it.color} – ${it.brand} (${it.style||'style'})</option>`;
+      el("list").appendChild(renderItem(it));
+    });
+  }
+
+  function renderItem(it){
+    let n=el("itemTmpl").content.firstElementChild.cloneNode(true);
+    n.dataset.id=it.id;
+    n.querySelector(".brand").textContent=it.brand||'';
+    n.querySelector(".color").textContent=it.color||'';
+    n.querySelector(".note").textContent=it.style?`(${it.style})`:'';
+    let s=n.querySelector(".sizes");
+    Object.entries(it.sizes||{}).forEach(([k,v])=>{
+      let d=document.createElement("div");
+      d.className="size";
+      d.textContent=`${k}: ${v}`;
+      s.appendChild(d)
+    });
+    if(it.measurements){
+      let m=document.createElement("div");
+      m.style.marginTop="6px";
+      m.textContent="Measurements: "+Object.entries(it.measurements).map(([k,v])=>`${k}: ${v}`).join(", ");
+      n.appendChild(m)
+    }
+    return n
+  }
+
+  async function editItem(id){
+    try{
+      const doc=await db.collection("inventory").doc(id).get();
+      if(!doc.exists)return;
+      const it=doc.data(); it.id=doc.id;
+      currentId=it.id;
+      el("brandInput").value=it.brand||"";
+      el("colorInput").value=it.color||"";
+      el("styleSelect").value=["softstyle","cotton","heavy cotton","ultra heavy","mid softstyle"].includes(it.style)?it.style:"other";
+      if(el("styleSelect").value==="other"){
+        el("customStyleInput").style.display="block";
+        el("customStyleInput").value=it.style||'';
+      }else el("customStyleInput").style.display="none";
+      measurements={...it.measurements};
+      initSizeChips(it.sizes);
+      updateMeasurementsInputs(it.measurements);
+      el("itemSelect").value=it.id;
+    }catch(err){
+      showStatus('Edit load failed: '+(err.message||err),'err',4000);
+    }
+  }
+
+  el("itemSelect").onchange=()=>{
+    const id=el("itemSelect").value;
+    id?editItem(id):resetEditor();
+  };
+
+  el("saveItemBtn").onclick=async()=>{
+    let b=el("brandInput").value.trim(),
+        c=el("colorInput").value.trim();
+    if(!b||!c){showStatus('Need brand & colour','err');return}
+    let st=el("styleSelect").value;
+    if(st==="other") st=el("customStyleInput").value.trim()||"Other";
+    let obj={id:currentId,brand:b,color:c,style:st,sizes:{...sizeMap},measurements:{...measurements}};
+    // preserve existing order if editing
+    const existing = cachedItems.find(x=>x.id===currentId);
+    if(existing && existing.order) obj.order = existing.order;
+    await saveItem(obj);
+    resetEditor();
+    render();
+  };
+
+  el("resetBtn").onclick=resetEditor;
+
+  el("deleteBtn").onclick=async()=>{
+    if(currentId&&confirm("Delete?")){
+      await deleteItem(currentId);
+      resetEditor();
+      render()
+    }
+  };
+
+  // Reorder using 'order' field
+  async function move(delta){
+    if(!currentId) return;
+    const items = [...cachedItems];
+    const i = items.findIndex(x=>x.id===currentId);
+    const j = i + delta;
+    if(i<0 || j<0 || j>=items.length) return;
+    // swap order values
+    const a = items[i], b = items[j];
+    const ao = a.order??(i+1)*1000, bo = b.order??(j+1)*1000;
+    try{
+      await db.collection('inventory').doc(a.id).set({order:bo},{merge:true});
+      await db.collection('inventory').doc(b.id).set({order:ao},{merge:true});
+      showStatus('Reordered','ok');
+      await render();
+      el("itemSelect").value=currentId;
+    }catch(err){
+      showStatus('Reorder failed: '+(err.message||err),'err',4000);
+    }
+  }
+  el("moveUpBtn").onclick=()=>move(-1);
+  el("moveDownBtn").onclick=()=>move(1);
+
+  function resetEditor(){
+    currentId=null;
+    el("brandInput").value=el("colorInput").value=el("customStyleInput").value="";
+    el("styleSelect").value="softstyle";
+    el("customStyleInput").style.display="none";
+    measurements={};
+    initSizeChips();
+    el("itemSelect").value="";
+  }
+
+  // initial read-only render
+  render();
+</script>
+</body>
+</html>
