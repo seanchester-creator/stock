@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Stock Inventory</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --text:#111111;
+      --panel:#f7f7f8;
+      --muted:#ffffff;
+      --border:#dcdde1;
+      --btn:#e5e7eb;
+      --btn2:#cfd3d8;
+      --btnText:#111;
+      --accent:#111;
+      --accentText:#fff;
+      --chip:#f3f4f6;
+      --shadow:0 10px 30px rgba(0,0,0,.08);
+      --radius:14px;
+      --trans:.2s ease;
+    }
+    body[data-mode="dark"]{
+      --bg:#0b0b0d;
+      --text:#f3f4f6;
+      --panel:#121214;
+      --muted:#0f0f11;
+      --border:#2a2a2f;
+      --btn:#2a2a30;
+      --btn2:#1d1d22;
+      --btnText:#f3f4f6;
+      --accent:#ffffff;
+      --accentText:#000;
+      --chip:#19191d;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    /* Advanced themes layered over base */
+    body[data-theme="rasta"]{
+      --accent:#ffd500;
+      --btn:#141414; --btn2:#222; --btnText:#fff;
+      --chip:#121212;
+    }
+    body[data-theme="neon"]{
+      --accent:#00f0ff;
+      --btn:#121212; --btn2:#191919; --btnText:#eaffff;
+      --chip:#13151d;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font:17px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:var(--bg); color:var(--text);
+      transition:background var(--trans), color var(--trans);
+    }
+
+    header{
+      position:sticky; top:0; z-index:10;
+      background:var(--panel);
+      border-bottom:1px solid var(--border);
+      padding:12px 14px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      box-shadow:var(--shadow);
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight:800; letter-spacing:.3px;
+    }
+    .brand .dot{width:10px; height:10px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 3px rgba(0,0,0,.05)}
+    .header-actions{display:flex; align-items:center; gap:10px}
+
+    .toggle{
+      --w:48px; --h:28px;
+      width:var(--w); height:var(--h); border-radius:999px; position:relative;
+      background:linear-gradient(180deg,var(--btn),var(--btn2));
+      border:1px solid var(--border); cursor:pointer;
+      display:flex; align-items:center; padding:2px;
+      transition:all var(--trans);
+    }
+    .toggle input{display:none}
+    .thumb{
+      width:24px; height:24px; border-radius:50%;
+      background:var(--accent); color:var(--accentText);
+      display:grid; place-items:center; font-size:12px; font-weight:900;
+      transform:translateX(0); transition:transform var(--trans);
+    }
+    .toggle input:checked + .thumb{ transform:translateX(20px) }
+
+    .wrap{max-width:960px; margin:auto; padding:16px}
+    .card{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:16px; box-shadow:var(--shadow)}
+
+    h1{margin:0; font-size:20px}
+    h2{margin:0 0 10px; font-size:18px}
+    label{display:block; margin:10px 0 6px; font-size:14px; opacity:.8}
+
+    input,select,button{font:inherit; font-size:16px}
+    input,select,textarea{
+      width:100%; padding:12px 14px; border-radius:12px;
+      border:1px solid var(--border); background:var(--muted); color:var(--text);
+      outline:none; transition:box-shadow var(--trans), background var(--trans);
+    }
+    input:focus,select:focus{ box-shadow:0 0 0 3px rgba(0,0,0,.04), 0 0 0 1px var(--accent) }
+
+    button{
+      border:0; border-radius:12px; width:100%;
+      padding:12px 16px; cursor:pointer; transition:transform var(--trans), filter var(--trans);
+      background:linear-gradient(180deg,var(--btn),var(--btn2)); color:var(--btnText);
+      box-shadow:var(--shadow); font-weight:700;
+    }
+    button:active{ transform:translateY(1px) }
+    .btn-primary{ background:linear-gradient(180deg,var(--accent), var(--btn2)); color:var(--accentText) }
+    .btn-danger{ background:linear-gradient(180deg,#ff4d4f,#d9363e); color:#fff }
+
+    .list{display:grid; gap:12px}
+    .item{background:var(--chip); border:1px solid var(--border); border-radius:12px; padding:12px}
+    .item-head{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
+    .meta{opacity:.85}
+    .sizes{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
+    .size{padding:6px 10px; border-radius:999px; background:var(--panel); border:1px solid var(--border)}
+
+    /* inline admin controls on each item */
+    .controls{display:none; gap:6px; width:100%; margin-top:10px}
+    .controls button{width:auto; padding:8px 10px; font-size:14px}
+
+    /* show controls when admin is active */
+    body.admin .controls{display:flex}
+
+    /* size chips in editor */
+    .chips{display:flex; flex-wrap:wrap; gap:10px; margin-top:10px}
+    .chip{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:999px; background:var(--chip); border:1px solid var(--border)}
+    .chip strong{min-width:42px; text-align:center}
+    .chip .qty{min-width:34px; text-align:center}
+    .chip button{width:auto; padding:8px 12px; font-size:18px; font-weight:900; border-radius:10px}
+    .chip .plus{ background:var(--accent); color:var(--accentText) }
+    .chip .minus{ background:var(--btn); color:var(--btnText) }
+
+    /* Advanced theme drawer */
+    .drawer{display:none; gap:8px}
+    .tag{display:inline-block; padding:8px 10px; border-radius:999px; border:1px solid var(--border); background:var(--chip); cursor:pointer; user-select:none}
+    .tag.active{outline:2px solid var(--accent)}
+
+    /* responsive */
+    @media (max-width: 520px){
+      .item-head{flex-direction:column; align-items:flex-start}
+      .controls{flex-wrap:wrap}
+      button{font-size:16px}
+    }
+  </style>
+</head>
+<body data-mode="light" data-theme="base">
+<header>
+  <div class="brand">
+    <div class="dot"></div>
+    <h1>Stock Inventory</h1>
+  </div>
+  <div class="header-actions">
+    <div class="toggle" title="Light / Dark">
+      <input type="checkbox" id="themeToggle" />
+      <div class="thumb">●</div>
+    </div>
+    <button id="moreThemesBtn" style="width:auto; padding:8px 10px">Themes ▾</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="card">
+    <div class="drawer" id="themeDrawer">
+      <span class="tag" data-theme="base">Base</span>
+      <span class="tag" data-theme="rasta">Rasta</span>
+      <span class="tag" data-theme="neon">Neon</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="list" id="list"></div>
+    <div id="empty">No items yet.</div>
+  </section>
+
+  <section class="card" id="passwordSection">
+    <h2>Admin Access</h2>
+    <label>Password</label>
+    <input type="password" id="passwordInput" placeholder="Enter password">
+    <button class="btn-primary" id="unlockBtn">Unlock</button>
+  </section>
+
+  <section class="card" id="editorSection" style="display:none">
+    <h2>Add / Edit Item</h2>
+    <label>Select Item</label>
+    <select id="itemSelect"><option value="">-- New Item --</option></select>
+
+    <label>Brand</label><input id="brandInput" placeholder="e.g. Gildan">
+    <label>Colour</label><input id="colorInput" placeholder="e.g. Black">
+
+    <label>Style</label>
+    <select id="styleSelect">
+      <option>softstyle</option><option>cotton</option>
+      <option>heavy cotton</option><option>ultra heavy</option>
+      <option>mid softstyle</option><option value="other">Other</option>
+    </select>
+    <input id="customStyleInput" placeholder="Custom style" style="display:none;margin-top:8px">
+
+    <label>Sizes & Stock</label>
+    <div class="chips" id="sizesChips"></div>
+
+    <div id="measurementsSection" style="display:none">
+      <h3>Measurements</h3>
+      <div id="measurementInputs"></div>
+    </div>
+
+    <button class="btn-primary" id="saveItemBtn">Save</button>
+    <button id="resetBtn">Reset</button>
+    <button class="btn-danger" id="deleteBtn">Delete</button>
+  </section>
+</main>
+
+<template id="itemTmpl">
+  <div class="item">
+    <div class="item-head">
+      <div>
+        <span class="color"></span> – <strong class="brand"></strong> <span class="note"></span>
+        <div class="meta"></div>
+      </div>
+      <div class="controls">
+        <button class="moveUp">▲</button>
+        <button class="moveDown">▼</button>
+        <button class="edit">Edit</button>
+        <button class="btn-danger delete">Delete</button>
+      </div>
+    </div>
+    <div class="sizes"></div>
+  </div>
+</template>
+
+<!-- Firebase compat SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<script>
+  // ===== THEME LOGIC =====
+  const themeToggle = document.getElementById('themeToggle');
+  const themeDrawer = document.getElementById('themeDrawer');
+  const moreThemesBtn = document.getElementById('moreThemesBtn');
+
+  // restore theme mode
+  const savedMode = localStorage.getItem('tsi_mode') || 'light';
+  const savedTheme = localStorage.getItem('tsi_theme') || 'base';
+  document.body.setAttribute('data-mode', savedMode);
+  document.body.setAttribute('data-theme', savedTheme);
+  themeToggle.checked = savedMode === 'dark';
+
+  themeToggle.onchange = () => {
+    const mode = themeToggle.checked ? 'dark' : 'light';
+    document.body.setAttribute('data-mode', mode);
+    localStorage.setItem('tsi_mode', mode);
+  };
+
+  moreThemesBtn.onclick = () => {
+    themeDrawer.style.display = themeDrawer.style.display === 'grid' ? 'none' : 'grid';
+    themeDrawer.style.gridTemplateColumns = 'repeat(3, minmax(0,1fr))';
+  };
+  themeDrawer.onclick = (e) => {
+    if(e.target.classList.contains('tag')){
+      document.querySelectorAll('#themeDrawer .tag').forEach(t=>t.classList.remove('active'));
+      e.target.classList.add('active');
+      const th = e.target.dataset.theme || 'base';
+      document.body.setAttribute('data-theme', th);
+      localStorage.setItem('tsi_theme', th);
+    }
+  };
+
+  // ===== FIREBASE =====
+  const firebaseConfig = {
+    apiKey:"AIzaSyCklSHKdm_sB83BsrDKuMzXddGgFi26w5w",
+    authDomain:"stock-2d5a3.firebaseapp.com",
+    projectId:"stock-2d5a3",
+    storageBucket:"stock-2d5a3.firebasestorage.app",
+    messagingSenderId:"419253323633",
+    appId:"1:419253323633:web:d6e4adca4d2464f320d8d0"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // ===== APP STATE =====
+  const sizesDefault=["S","M","L","XL","2XL","3XL","4XL"];
+  const el=id=>document.getElementById(id);
+  let currentId=null,sizeMap={},measurements={},cachedItems=[],isAdmin=false;
+
+  // ===== ADMIN UNLOCK =====
+  el("unlockBtn").onclick=()=>{
+    if(el("passwordInput").value === "sonny"){
+      isAdmin = true;
+      document.body.classList.add('admin');
+      el("editorSection").style.display="block";
+      el("passwordSection").style.display="none";
+      resetEditor(); render();
+      window.scrollTo({top:0,behavior:'smooth'});
+    } else alert("Wrong password");
+  };
+
+  // ===== EDITOR WIRING =====
+  el("styleSelect").onchange=()=>{
+    el("customStyleInput").style.display = el("styleSelect").value==="other" ? "block" : "none";
+  };
+
+  function initSizeChips(initial={}){
+    el("sizesChips").innerHTML="";
+    sizeMap={};
+    sizesDefault.forEach(s=>{
+      sizeMap[s]=initial[s]||0;
+      const d=document.createElement("div");
+      d.className="chip";
+      d.innerHTML=`<strong>${s}</strong>
+        <button class='minus' data-delta=-1>−</button>
+        <span class='qty'>${sizeMap[s]}</span>
+        <button class='plus' data-delta=1>+</button>`;
+      d.onclick=e=>{
+        if(e.target && e.target.dataset && e.target.dataset.delta){
+          const delta = parseInt(e.target.dataset.delta,10) || 0;
+          sizeMap[s]=Math.max(0,(sizeMap[s]||0)+delta);
+          d.querySelector(".qty").textContent=sizeMap[s];
+        }
+      };
+      el("sizesChips").appendChild(d);
+    });
+    updateMeasurementsInputs(initial.measurements);
+  }
+
+  function updateMeasurementsInputs(initial={}){
+    el("measurementInputs").innerHTML="";
+    sizesDefault.forEach(s=>{
+      const i=document.createElement("input");
+      i.placeholder=s+" measurement";
+      i.value=initial[s]||"";
+      i.oninput=()=>{measurements[s]=i.value};
+      el("measurementInputs").appendChild(i);
+    });
+    el("measurementsSection").style.display="block";
+  }
+
+  // ===== DATA =====
+  async function loadItems(){
+    let snap;
+    try{ snap = await db.collection("inventory").orderBy("order","asc").get(); }
+    catch{ snap = await db.collection("inventory").get(); }
+    const items = snap.docs.map(doc=>({...doc.data(),id:doc.id}));
+    items.sort((a,b)=>(a.order??0)-(b.order??0));
+    cachedItems = items;
+    return items;
+  }
+  async function saveItem(item){
+    if(!item.order) item.order = Date.now();
+    if(item.id){
+      await db.collection("inventory").doc(item.id).set(item);
+    }else{
+      const ref = await db.collection("inventory").add(item);
+      item.id = ref.id;
+    }
+  }
+  async function deleteItem(id){ await db.collection("inventory").doc(id).delete(); }
+
+  // ===== RENDER =====
+  async function render(){
+    const items = await loadItems();
+    el("list").innerHTML="";
+    if(!items.length){ el("empty").style.display="block"; } else el("empty").style.display="none";
+    // dropdown
+    el("itemSelect").innerHTML = "<option value=''>-- New Item --</option>";
+    items.forEach(it=>{
+      el("itemSelect").innerHTML += `<option value='${it.id}'>${it.color} – ${it.brand} (${it.style||''})</option>`;
+      el("list").appendChild(renderItem(it));
+    });
+  }
+
+  function renderItem(it){
+    let n = el("itemTmpl").content.firstElementChild.cloneNode(true);
+    n.dataset.id = it.id;
+    n.querySelector(".brand").textContent = it.brand||"";
+    n.querySelector(".color").textContent = (it.color||"");
+    n.querySelector(".note").textContent = it.style?`(${it.style})`:"";
+    n.querySelector(".meta").textContent = it.brand && it.color ? "" : "";
+    const s = n.querySelector(".sizes");
+    Object.entries(it.sizes||{}).forEach(([k,v])=>{
+      let d=document.createElement("div"); d.className="size"; d.textContent=`${k}: ${v}`; s.appendChild(d);
+    });
+    // admin controls
+    const ctrls = n.querySelector(".controls");
+    if(isAdmin){
+      ctrls.querySelector(".moveUp").onclick = ()=>moveItem(it.id,-1);
+      ctrls.querySelector(".moveDown").onclick = ()=>moveItem(it.id,1);
+      ctrls.querySelector(".edit").onclick = ()=>startEdit(it.id);
+      ctrls.querySelector(".delete").onclick = async()=>{
+        if(confirm("Delete this item?")){ await deleteItem(it.id); if(currentId===it.id) resetEditor(); render(); }
+      };
+    }
+    return n;
+  }
+
+  async function startEdit(id){
+    const doc = await db.collection("inventory").doc(id).get();
+    if(!doc.exists) return;
+    const it = doc.data(); it.id = doc.id; currentId = it.id;
+    el("brandInput").value = it.brand||"";
+    el("colorInput").value = it.color||"";
+    el("styleSelect").value = ["softstyle","cotton","heavy cotton","ultra heavy","mid softstyle"].includes(it.style)?it.style:"other";
+    if(el("styleSelect").value==="other"){ el("customStyleInput").style.display="block"; el("customStyleInput").value = it.style||""; }
+    else el("customStyleInput").style.display="none";
+    measurements = {...it.measurements};
+    initSizeChips(it.sizes||{});
+    updateMeasurementsInputs(it.measurements||{});
+    el("itemSelect").value = it.id;
+    window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+  }
+
+  el("itemSelect").onchange = ()=>{
+    const id = el("itemSelect").value;
+    id ? startEdit(id) : resetEditor();
+  };
+
+  el("saveItemBtn").onclick = async()=>{
+    const b = el("brandInput").value.trim();
+    const c = el("colorInput").value.trim();
+    if(!b||!c){ alert("Need brand & colour"); return; }
+    let st = el("styleSelect").value;
+    if(st==="other") st = el("customStyleInput").value.trim() || "Other";
+    const obj = { id:currentId, brand:b, color:c, style:st, sizes:{...sizeMap}, measurements:{...measurements} };
+    const existing = cachedItems.find(x=>x.id===currentId);
+    if(existing && existing.order) obj.order = existing.order;
+    await saveItem(obj);
+    resetEditor(); render();
+  };
+
+  function resetEditor(){
+    currentId=null;
+    el("brandInput").value=el("colorInput").value=el("customStyleInput").value="";
+    el("styleSelect").value="softstyle";
+    el("customStyleInput").style.display="none";
+    measurements={};
+    initSizeChips();
+    el("itemSelect").value="";
+  }
+
+  async function moveItem(id, delta){
+    const items = [...cachedItems];
+    const i = items.findIndex(x=>x.id===id);
+    const j = i + delta;
+    if(i<0 || j<0 || j>=items.length) return;
+    const a = items[i], b = items[j];
+    const ao = a.order ?? (i+1)*1000;
+    const bo = b.order ?? (j+1)*1000;
+    await db.collection("inventory").doc(a.id).set({order:bo},{merge:true});
+    await db.collection("inventory").doc(b.id).set({order:ao},{merge:true});
+    await render();
+    if(currentId===id) el("itemSelect").value = id;
+  }
+
+  // boot
+  render();
+</script>
+</body>
+</html>
