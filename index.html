@@ -247,9 +247,9 @@
       const obj = snap.val() || {};
       let items = Object.entries(obj).map(([key, it]) => ({
         ...it,
-        id: it?.id || key,
-        order: typeof it?.order === 'number' ? it.order : null,
-        isSeparator: !!it?.isSeparator
+        id: (it && it.id) || key,
+        order: (typeof (it && it.order) === 'number') ? it.order : null,
+        isSeparator: !!(it && it.isSeparator)
       }));
       let maxOrder = items.reduce((m,i)=>Math.max(m, Number.isFinite(i.order)?i.order:-1), -1);
       items.forEach(i=>{ if(!Number.isFinite(i.order)){ i.order = ++maxOrder; } });
@@ -274,7 +274,7 @@
     function handlePassword(pw){
       const val = (pw || '').trim();
       if (val === ADMIN_PASSWORD){
-        try { if (loginDlg?.open) loginDlg.close(); } catch {}
+        try { if (loginDlg && loginDlg.open) loginDlg.close(); } catch {}
         if (loginPw) loginPw.value = '';
         toggleAdmin(true);
       } else if (val) {
@@ -286,7 +286,7 @@
       if (isAdmin){ toggleAdmin(false); return; }
       // Try dialog first
       try {
-        if (typeof loginDlg?.showModal === 'function'){
+        if (loginDlg && typeof loginDlg.showModal === 'function'){
           loginDlg.showModal();
           if (loginPw) loginPw.focus();
           // If dialog failed silently (some iOS/embedded browsers), fallback after a tick
@@ -305,13 +305,13 @@
     const loginFormEl = document.getElementById('loginForm');
     if (loginFormEl) loginFormEl.addEventListener('submit', (e)=>{
       e.preventDefault();
-      handlePassword(loginPw?.value);
+      handlePassword(loginPw ? loginPw.value : '');
     });
 
     const loginSubmitEl = document.getElementById('loginSubmit');
     if (loginSubmitEl) loginSubmitEl.addEventListener('click', (e)=>{
       e.preventDefault();
-      handlePassword(loginPw?.value);
+      handlePassword(loginPw ? loginPw.value : '');
     });
 
     // Enter key convenience inside password field
@@ -439,7 +439,7 @@
 
     function upsertItem(obj){
       const id = obj.id || uid();
-      const brand = (obj.brand ?? '').toString().trim() || 'Gildan';
+      const brand = ((obj.brand !== undefined && obj.brand !== null) ? obj.brand : '').toString().trim() || 'Gildan';
       const isSeparator = !!obj.isSeparator;
       const order = Number.isFinite(obj.order) ? obj.order : (state.items.reduce((m,i)=>Math.max(m, Number.isFinite(i.order)?i.order:-1), -1) + 1);
       const clean = {id, color: obj.color||'', size: obj.size||'', brand: isSeparator ? '' : brand, style: obj.style||'', qty: Number(obj.qty||0), notes: (obj.notes||''), order, isSeparator};
@@ -534,15 +534,15 @@
     const tbodyEl = document.getElementById('tbody');
     tbodyEl.addEventListener('click', (e)=>{
       const btn = e.target.closest('button'); if(!btn) return;
-      if (!isAdmin && (btn.id?.startsWith('inc-') || btn.id?.startsWith('dec-') || btn.id?.startsWith('del-') || btn.id?.startsWith('edit-') || btn.id?.startsWith('up-') || btn.id?.startsWith('down-'))) {
+      if (!isAdmin && (btn.id && (btn.id.indexOf('inc-')===0 || btn.id.indexOf('dec-')===0 || btn.id.indexOf('del-')===0 || btn.id.indexOf('edit-')===0 || btn.id.indexOf('up-')===0 || btn.id.indexOf('down-')===0))) {
         alert('Admin only'); return;
       }
-      if (btn.id?.startsWith('inc-')) { adjQty(btn.id.slice(4), +1); }
-      else if (btn.id?.startsWith('dec-')) { adjQty(btn.id.slice(4), -1); }
-      else if (btn.id?.startsWith('del-')) { removeItem(btn.id.slice(4)); }
-      else if (btn.id?.startsWith('edit-')) { openEdit(btn.id.slice(5)); }
-      else if (btn.id?.startsWith('up-')) { moveItem(btn.id.slice(3), -1); }
-      else if (btn.id?.startsWith('down-')) { moveItem(btn.id.slice(5), +1); }
+      if (btn.id && btn.id.indexOf('inc-')===0)) { adjQty(btn.id.slice(4), +1); }
+      else if (btn.id && btn.id.indexOf('dec-')===0)) { adjQty(btn.id.slice(4), -1); }
+      else if (btn.id && btn.id.indexOf('del-')===0)) { removeItem(btn.id.slice(4)); }
+      else if (btn.id && btn.id.indexOf('edit-')===0)) { openEdit(btn.id.slice(5)); }
+      else if (btn.id && btn.id.indexOf('up-')===0)) { moveItem(btn.id.slice(3), -1); }
+      else if (btn.id && btn.id.indexOf('down-')===0)) { moveItem(btn.id.slice(5), +1); }
     }, {passive:false});
 
     // Quantity adjust
