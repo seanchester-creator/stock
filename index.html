@@ -21,26 +21,33 @@
     html,body{height:100%}
     body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica Neue,Arial;background:var(--bg);color:var(--text)}
     header{position:sticky;top:0;z-index:5;backdrop-filter:saturate(1.05) blur(10px);background:rgba(246,247,249,0.9);border-bottom:1px solid var(--line)}
-    .wrap{max-width:1100px;margin:0 auto;padding:16px}
-    h1{margin:0;font-size:24px}
-    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .wrap{max-width:900px;margin:0 auto;padding:12px}
+    h1{margin:0;font-size:22px}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .spacer{flex:1}
-    .logo{display:flex;align-items:center;gap:12px}
-    .logo img{height:60px;width:auto}
-    .btn{border:1px solid var(--line);background:#fff;color:#111827;padding:12px 14px;border-radius:12px;cursor:pointer;font-weight:600;min-height:44px}
+    .logo{display:flex;align-items:center;gap:10px}
+    .logo img{height:48px;width:auto}
+    .btn{border:1px solid var(--line);background:#fff;color:#111827;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:600;min-height:40px}
     .btn.primary{background:var(--accent);color:#fff;border-color:#111827}
-    .toolbar{margin-top:8px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    input,select{background:#fff;color:#0b1220;border:1px solid var(--line);padding:10px 12px;border-radius:12px;outline:none;min-height:44px;font-size:16px}
+    .toolbar{margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    input,select{background:#fff;color:#0b1220;border:1px solid var(--line);padding:8px 10px;border-radius:10px;outline:none;min-height:40px;font-size:15px}
     input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak)}
     .muted{color:var(--muted)}
-    main{max-width:1100px;margin:20px auto;padding:0 16px 80px}
-    .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px}
-    table{width:100%;border-collapse:separate;border-spacing:0}
-    th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line)}
+    main{max-width:900px;margin:16px auto 80px;padding:0 12px}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px}
+    table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+    colgroup col:nth-child(1){width:18%}
+    colgroup col:nth-child(2){width:12%}
+    colgroup col:nth-child(3){width:10%}
+    colgroup col:nth-child(4){width:20%}
+    colgroup col:nth-child(5){width:18%}
+    colgroup col:nth-child(6){width:auto}
+    colgroup col:nth-child(7){width:12%}
+    th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     tr:hover td{background:#f9fafb}
     th.sortable{cursor:pointer}
     .right{text-align:right}
-    .iconbtn{width:36px;height:36px;display:inline-grid;place-items:center;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer}
+    .iconbtn{width:34px;height:34px;display:inline-grid;place-items:center;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer}
     .hidden{display:none !important}
     .pill{padding:6px 10px;border-radius:999px;background:#f3f4f6;border:1px solid var(--line);font-size:12px}
     /* Modals */
@@ -69,12 +76,7 @@
         <button id="loginBtn" class="btn">🔐 Admin</button>
       </div>
       <div class="toolbar">
-        <input id="search" placeholder="Search color, size, brand, style…">
-        <select id="filterColor"><option value="">All colours</option></select>
-        <select id="filterSize"><option value="">All sizes</option></select>
-        <select id="filterBrand"><option value="">All brands</option></select>
-        <select id="filterStyle"><option value="">All styles</option></select>
-        <label class="row" style="gap:6px;align-items:center;margin-left:8px">
+        <label class="row" style="gap:6px;align-items:center;margin-left:2px">
           <input type="checkbox" id="toggleNotes"> Show notes
         </label>
         <div class="spacer"></div>
@@ -84,21 +86,24 @@
   </header>
 
   <main>
-    <section class="panel" style="margin-top:14px">
+    <section class="panel" style="margin-top:12px">
       <div class="row" style="align-items:flex-end">
-        <h3 style="margin:8px 0">Current stock</h3>
+        <h3 style="margin:6px 0">Current stock</h3>
         <div class="spacer"></div>
         <button class="btn hidden" id="addQuick">New row</button>
       </div>
-      <div style="overflow:auto; border-radius:12px; border:1px solid var(--line); margin-top:10px">
+      <div style="overflow:auto; border-radius:12px; border:1px solid var(--line); margin-top:8px">
         <table id="table">
+          <colgroup>
+            <col><col><col><col><col><col><col>
+          </colgroup>
           <thead>
             <tr>
-              <th class="sortable" data-key="color"><span>Colour</span></th>
-              <th class="sortable" data-key="size"><span>Size</span></th>
-              <th class="sortable right" data-key="qty"><span>Qty</span></th>
-              <th class="sortable" data-key="brand"><span>Brand</span></th>
-              <th class="sortable" data-key="style"><span>Style</span></th>
+              <th scope="col" class="sortable" data-key="color"><span>Colour</span></th>
+              <th scope="col" class="sortable" data-key="size"><span>Size</span></th>
+              <th scope="col" class="sortable right" data-key="qty"><span>Qty</span></th>
+              <th scope="col" class="sortable" data-key="brand"><span>Brand</span></th>
+              <th scope="col" class="sortable" data-key="style"><span>Style</span></th>
               <th id="thNotes"><span>Notes</span></th>
               <th id="thActions" class="right hidden">Actions</th>
             </tr>
@@ -122,7 +127,7 @@
       <div class="row" style="margin-top:8px">
         <button id="cancelLogin" class="btn" style="flex:1">Cancel</button>
       </div>
-      <p class="muted" style="margin:8px 0 0;font-size:12px">Tip: if no passcode is set in Firebase at <code>/admin/passcode</code>, the default is <code>sonnyadmin</code>.</p>
+      <p class="muted" style="margin:8px 0 0;font-size:12px">Tip: if no passcode is set in Firebase at <code>/admin/passcode</code>, the default is <code>sonny</code>.</p>
     </div>
   </div>
 
@@ -130,7 +135,7 @@
   <div id="listsModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="listsTitle">
     <div class="modal">
       <h3 id="listsTitle">Edit lists</h3>
-      <p class="muted" style="margin:0 0 8px">Manage options used in the form and filters.</p>
+      <p class="muted" style="margin:0 0 8px">Manage options used in the form.</p>
 
       <div style="margin-top:8px">
         <strong>Colours</strong>
@@ -212,7 +217,8 @@
     const adminPassRef = db.ref('admin/passcode');
 
     // --- Helpers ---
-    const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+    const $  = (s, r=document) => r.querySelector(s);
+    const $$ = (s, r=document) => [...r.querySelectorAll(s)];
     let isAdmin = false;
 
     function naturalCompare(a,b){
@@ -226,44 +232,7 @@
       $('#thActions').classList.toggle('hidden', !isAdmin);
       $('#listsBtn').classList.toggle('hidden', !isAdmin);
       $('#loginBtn').textContent = isAdmin ? '🚪 Log out' : '🔐 Admin';
-      render(); // update action cells visibility
-    }
-
-    function populateFilters(){
-      const colors = new Set(state.colors.concat(state.items.map(i=>i.color).filter(Boolean)));
-      const sizes  = new Set(state.sizes.concat(state.items.map(i=>i.size).filter(Boolean)));
-      const brands = new Set(state.brands.concat(state.items.map(i=>i.brand||'').filter(Boolean)));
-      const styles = new Set(state.styles.concat(state.items.map(i=>i.style||'').filter(Boolean)));
-
-      function fill(sel, values){
-        const el = $(sel);
-        const current = el.value;
-        el.innerHTML = `<option value="">${el.id==='filterColor'?'All colours':el.id==='filterSize'?'All sizes':el.id==='filterBrand'?'All brands':'All styles'}</option>` +
-          [...values].sort(naturalCompare).map(v=>`<option>${v}</option>`).join('');
-        el.value = current;
-      }
-      fill('#filterColor', colors);
-      fill('#filterSize', sizes);
-      fill('#filterBrand', brands);
-      fill('#filterStyle', styles);
-    }
-
-    function applyFilters(items){
-      const q = $('#search').value.trim().toLowerCase();
-      const fColor = $('#filterColor').value;
-      const fSize  = $('#filterSize').value;
-      const fBrand = $('#filterBrand').value;
-      const fStyle = $('#filterStyle').value;
-
-      return items.filter(it=>{
-        if (fColor && it.color !== fColor) return false;
-        if (fSize  && it.size  !== fSize)  return false;
-        if (fBrand && (it.brand||'') !== fBrand) return false;
-        if (fStyle && (it.style||'') !== fStyle) return false;
-        if (!q) return true;
-        const blob = `${it.color} ${it.size} ${it.brand||''} ${it.style||''} ${it.notes||''}`.toLowerCase();
-        return blob.includes(q);
-      });
+      render();
     }
 
     function computeTotals(items){
@@ -282,23 +251,26 @@
       });
     }
 
-    function render(){
-      const filtered = applyFilters(state.items);
-      computeTotals(filtered);
+    function esc(s){ return (s??'').toString()
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;'); }
 
-      const rows = sortItems(filtered).map(it=>{
+    function render(){
+      computeTotals(state.items);
+      const rows = sortItems(state.items).map(it=>{
         const id = it.id;
         return `
           <tr data-id="${id||''}">
-            <td>${it.color||''}</td>
-            <td>${it.size||''}</td>
+            <td>${esc(it.color||'')}</td>
+            <td>${esc(it.size||'')}</td>
             <td class="right"><strong>${Number(it.qty||0)}</strong></td>
-            <td>${it.brand||'(unbranded)'}</td>
-            <td>${it.style||''}</td>
-            <td class="td-notes">${it.notes||''}</td>
+            <td>${esc(it.brand||'(unbranded)')}</td>
+            <td>${esc(it.style||'')}</td>
+            <td class="td-notes">${esc(it.notes||'')}</td>
             <td class="right ${isAdmin?'':'hidden'}">
-              <button class="iconbtn btn-edit" title="Edit">✏️</button>
-              <button class="iconbtn btn-del" title="Delete">🗑️</button>
+              <button class="iconbtn btn-edit" title="Edit" aria-label="Edit">✏️</button>
+              <button class="iconbtn btn-del" title="Delete" aria-label="Delete">🗑️</button>
             </td>
           </tr>
         `;
@@ -309,33 +281,31 @@
       const showNotes = $('#toggleNotes').checked;
       $('#thNotes').classList.toggle('hidden', !showNotes);
       $$('.td-notes').forEach(td=>td.classList.toggle('hidden', !showNotes));
+
+      // Update sorted header aria state
+      $$('#table thead th[scope="col"]').forEach(th=>th.removeAttribute('aria-sort'));
+      const active = $(`#table thead th[data-key="${state.sortKey}"]`);
+      if (active) active.setAttribute('aria-sort', state.sortDir==='asc'?'ascending':'descending');
     }
 
-    // --- Live data bindings ---
+    // --- Live data bindings (simplified, no search/filter) ---
     listsRef.on('value', snap=>{
       const v=snap.val()||{};
       if (v.sizes)  state.sizes  = v.sizes;
       if (v.colors) state.colors = v.colors;
       if (v.styles) state.styles = v.styles;
       if (v.brands) state.brands = v.brands;
-      populateFilters();
       render();
     });
 
     itemsRef.on('value', snap=>{
       const obj = snap.val()||{};
       state.items = Object.entries(obj).map(([id,val])=>({id, ...val}));
-      populateFilters();
       render();
     });
 
     // --- UI events ---
     $('#toggleNotes').addEventListener('change', render);
-    $('#search').addEventListener('input', render);
-    $('#filterColor').addEventListener('change', render);
-    $('#filterSize').addEventListener('change', render);
-    $('#filterBrand').addEventListener('change', render);
-    $('#filterStyle').addEventListener('change', render);
 
     // sorting
     $$('#table thead th.sortable').forEach(th=>{
@@ -351,7 +321,7 @@
       });
     });
 
-    // --- Admin login (robust; iPhone friendly) ---
+    // --- Admin login ---
     const loginModal = $('#loginModal');
     function openLogin(){ loginModal.style.display = 'flex'; $('#adminPass').value=''; $('#loginErr').classList.add('hidden'); setTimeout(()=>$('#adminPass').focus(), 50); }
     function closeLogin(){ loginModal.style.display = 'none'; }
@@ -388,7 +358,7 @@
         err.textContent = 'Please enter a passcode.'; err.classList.remove('hidden'); return;
       }
       const fromDB = await readPasscodeFromDB();
-      const expected = (fromDB && String(fromDB)) || 'sonnyadmin';
+      const expected = (fromDB && String(fromDB)) || 'sonny'; // default changed here
       if (entered === expected){
         localStorage.setItem(LS_KEY, '1');
         setAdmin(true);
@@ -455,7 +425,6 @@
 
     $('#saveLists').addEventListener('click', ()=>{
       if (!isAdmin) return;
-      // Basic cleanup + sort
       const clean = arr => [...new Set(arr.map(s=>s.trim()).filter(Boolean))].sort(naturalCompare);
       const payload = {
         colors: clean(working.colors),
@@ -477,42 +446,23 @@
     });
 
     function ensureDataLists(){
-      if (!$('#dlColors')){
-        const dl = document.createElement('datalist');
-        dl.id='dlColors';
-        dl.innerHTML = state.colors.sort(naturalCompare).map(v=>`<option value="${v}">`).join('');
-        document.body.appendChild(dl);
-      } else {
-        $('#dlColors').innerHTML = state.colors.sort(naturalCompare).map(v=>`<option value="${v}">`).join('');
-      }
-      if (!$('#dlSizes')){
-        const dl = document.createElement('datalist');
-        dl.id='dlSizes';
-        dl.innerHTML = state.sizes.sort(naturalCompare).map(v=>`<option value="${v}">`).join('');
-        document.body.appendChild(dl);
-      } else {
-        $('#dlSizes').innerHTML = state.sizes.sort(naturalCompare).map(v=>`<option value="${v}">`).join('');
-      }
-      if (!$('#dlBrands')){
-        const dl = document.createElement('datalist');
-        dl.id='dlBrands';
-        dl.innerHTML = (state.brands||[]).sort(naturalCompare).map(v=>`<option value="${v}">`).join('');
-        document.body.appendChild(dl);
-      } else {
-        $('#dlBrands').innerHTML = (state.brands||[]).sort(naturalCompare).map(v=>`<option value="${v}">`).join('');
-      }
-      if (!$('#dlStyles')){
-        const dl = document.createElement('datalist');
-        dl.id='dlStyles';
-        dl.innerHTML = state.styles.sort(naturalCompare).map(v=>`<option value="${v}">`).join('');
-        document.body.appendChild(dl);
-      } else {
-        $('#dlStyles').innerHTML = state.styles.sort(naturalCompare).map(v=>`<option value="${v}">`).join('');
-      }
+      const setList = (id, values) => {
+        if (!$(id)){
+          const dl = document.createElement('datalist');
+          dl.id = id.slice(1);
+          dl.innerHTML = (values||[]).sort(naturalCompare).map(v=>`<option value="${v}">`).join('');
+          document.body.appendChild(dl);
+        } else {
+          $(id).innerHTML = (values||[]).sort(naturalCompare).map(v=>`<option value="${v}">`).join('');
+        }
+      };
+      setList('#dlColors', state.colors);
+      setList('#dlSizes', state.sizes);
+      setList('#dlBrands', state.brands||[]);
+      setList('#dlStyles', state.styles);
     }
 
     function addInlineEditor(){
-      // Prevent duplicates
       if ($('#tbody tr.editing')) return;
 
       const blank = {
@@ -529,7 +479,7 @@
       tr.innerHTML = `
         <td><input id="eColor" list="dlColors" value="${blank.color}"></td>
         <td><input id="eSize" list="dlSizes" value="${blank.size}"></td>
-        <td class="right"><input id="eQty" type="number" min="0" step="1" value="${blank.qty}" style="width:100px;text-align:right"></td>
+        <td class="right"><input id="eQty" type="number" min="0" step="1" value="${blank.qty}" style="width:90px;text-align:right"></td>
         <td><input id="eBrand" list="dlBrands" value="${blank.brand}"></td>
         <td><input id="eStyle" list="dlStyles" value="${blank.style}"></td>
         <td class="td-notes"><input id="eNotes" placeholder="Notes (optional)"></td>
@@ -541,7 +491,6 @@
       $('#tbody').prepend(tr);
       ensureDataLists();
 
-      // respect notes toggle
       const showNotes = $('#toggleNotes').checked;
       $$('.td-notes', tr).forEach(td=>td.classList.toggle('hidden', !showNotes));
 
@@ -549,7 +498,7 @@
         const payload = {
           color: $('#eColor').value.trim(),
           size: $('#eSize').value.trim(),
-          qty: Number($('#eQty').value)||0,
+          qty: Math.max(0, Math.floor(Number($('#eQty').value)||0)),
           brand: $('#eBrand').value.trim(),
           style: $('#eStyle').value.trim(),
           notes: $('#eNotes').value.trim()
@@ -593,7 +542,7 @@
       tr.innerHTML = `
         <td><input id="eColor" list="dlColors" value="${current.color}"></td>
         <td><input id="eSize" list="dlSizes" value="${current.size}"></td>
-        <td class="right"><input id="eQty" type="number" min="0" step="1" value="${current.qty}" style="width:100px;text-align:right"></td>
+        <td class="right"><input id="eQty" type="number" min="0" step="1" value="${current.qty}" style="width:90px;text-align:right"></td>
         <td><input id="eBrand" list="dlBrands" value="${current.brand}"></td>
         <td><input id="eStyle" list="dlStyles" value="${current.style}"></td>
         <td class="td-notes"><input id="eNotes" value="${current.notes}"></td>
@@ -610,7 +559,7 @@
         const payload = {
           color: $('#eColor').value.trim(),
           size: $('#eSize').value.trim(),
-          qty: Number($('#eQty').value)||0,
+          qty: Math.max(0, Math.floor(Number($('#eQty').value)||0)),
           brand: $('#eBrand').value.trim(),
           style: $('#eStyle').value.trim(),
           notes: $('#eNotes').value.trim()
@@ -622,6 +571,14 @@
 
     // Initial render
     render();
+
+    // Esc closes modals
+    document.addEventListener('keydown', (e)=>{
+      if (e.key==='Escape'){
+        if (loginModal.style.display==='flex') closeLogin();
+        if (listsModal.style.display==='flex') closeLists();
+      }
+    });
 
     // Expose openLogin for quick access if needed
     window.openLogin = openLogin;
