@@ -131,6 +131,7 @@
           <th>Quantity</th>
           <th>Measurements</th>
           <th>Notes</th>
+          <th id="actions-header" class="hidden">Actions</th>
         </tr>
       </thead>
       <tbody id="inventory-body"></tbody>
@@ -138,9 +139,8 @@
   </div>
 
   <script type="module">
-    // Firebase Setup
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -156,8 +156,9 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth();
-
     const provider = new GoogleAuthProvider();
+
+    const adminEmails = ["youremail@example.com"]; // <---- add your admin email(s) here
 
     const loginBtn = document.getElementById("login-btn");
     const logoutBtn = document.getElementById("logout-btn");
@@ -166,6 +167,9 @@
     const tableBody = document.getElementById("inventory-body");
     const showMeasurements = document.getElementById("show-measurements");
     const measurementsSection = document.getElementById("measurements-section");
+    const actionsHeader = document.getElementById("actions-header");
+
+    let isAdmin = false;
 
     loginBtn.onclick = () => signInWithPopup(auth, provider);
     logoutBtn.onclick = () => signOut(auth);
@@ -176,11 +180,18 @@
         loginBtn.classList.add("hidden");
         logoutBtn.classList.remove("hidden");
         form.classList.remove("hidden");
+
+        isAdmin = adminEmails.includes(user.email);
+        actionsHeader.classList.toggle("hidden", !isAdmin);
+
+        loadInventory();
       } else {
         userStatus.textContent = "Not logged in";
         loginBtn.classList.remove("hidden");
         logoutBtn.classList.add("hidden");
         form.classList.add("hidden");
+        actionsHeader.classList.add("hidden");
+        tableBody.innerHTML = "";
       }
     });
 
@@ -211,31 +222,44 @@
       measurementsSection.classList.add("hidden");
     });
 
-    onValue(ref(db, "tshirts"), (snapshot) => {
-      const data = snapshot.val();
-      tableBody.innerHTML = "";
-      if (!data) return;
+    function loadInventory() {
+      onValue(ref(db, "tshirts"), (snapshot) => {
+        const data = snapshot.val();
+        tableBody.innerHTML = "";
+        if (!data) return;
 
-      const shirts = Object.values(data).sort((a, b) =>
-        a.name.localeCompare(b.name)
-      );
+        const shirts = Object.values(data).sort((a, b) =>
+          a.name.localeCompare(b.name)
+        );
 
-      shirts.forEach((shirt) => {
-        const row = document.createElement("tr");
-        const m = shirt.measurements;
-        row.innerHTML = `
-          <td>${shirt.name}</td>
-          <td>${shirt.color}</td>
-          <td>${shirt.qty || 0}</td>
-          <td>${m ? `Chest: ${m.chest || "-"} | Length: ${m.length || "-"}` : ""}</td>
-          <td>${shirt.notes || ""}</td>
-        `;
-        tableBody.appendChild(row);
+        shirts.forEach((shirt) => {
+          const row = document.createElement("tr");
+          const m = shirt.measurements;
+          row.innerHTML = `
+            <td>${shirt.name}</td>
+            <td>${shirt.color}</td>
+            <td>${shirt.qty || 0}</td>
+            <td>${m ? `Chest: ${m.chest || "-"} | Length: ${m.length || "-"}` : ""}</td>
+            <td>${shirt.notes || ""}</td>
+            ${isAdmin ? `<td><button data-name="${shirt.name}" class="delete-btn">Delete</button></td>` : ""}
+          `;
+          tableBody.appendChild(row);
+        });
+
+        if (isAdmin) {
+          document.querySelectorAll(".delete-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const name = btn.getAttribute("data-name");
+              remove(ref(db, "tshirts/" + name));
+            });
+          });
+        }
       });
-    });
+    }
   </script>
 </body>
 </html>
+
 
 
 
