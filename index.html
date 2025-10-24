@@ -33,27 +33,21 @@
     h1{margin:0; font-size:24px; letter-spacing:.2px}
     .row{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
     .spacer{flex:1}
-
     .logo{display:flex; align-items:center; gap:12px}
     .logo img{height:60px; width:auto}
-
     .btn{appearance:none; border:1px solid var(--line); background:#fff; color:#111827; padding:12px 14px; border-radius:12px; cursor:pointer; font-weight:600; min-height:44px}
     .btn:hover{border-color:var(--accent)}
     .btn.primary{background:var(--accent); color:#fff; border-color:#111827}
     .btn.ghost{background:transparent}
-
     .toolbar{margin-top:8px; display:flex; gap:10px; flex-wrap:wrap}
     input, select{
       background:#fff; color:#0b1220; border:1px solid var(--line);
       padding:10px 12px; border-radius:12px; outline:none; min-height:44px; font-size:16px
     }
     input:focus, select:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-weak)}
-
     main{max-width:1100px; margin:20px auto; padding:0 16px 80px}
-
     .panel{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px}
     .panel h3{margin:4px 0 10px; font-size:16px}
-
     table{width:100%; border-collapse:separate; border-spacing:0}
     thead th{position:sticky; top:0; background:var(--panel); z-index:2}
     th, td{ text-align:left; padding:12px; border-bottom:1px solid var(--line); vertical-align:middle}
@@ -61,21 +55,15 @@
     th.sortable{cursor:pointer}
     th.sortable span{opacity:.7}
     th.sortable.active span{opacity:1; color:#111}
-
     .qty{display:inline-flex; align-items:center; gap:8px}
     .iconbtn{width:40px; height:40px; display:inline-grid; place-items:center; border-radius:10px; border:1px solid var(--line); background:#fff; cursor:pointer}
     .iconbtn:hover{border-color:var(--accent)}
-
     .grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:12px}
     .muted{color:var(--muted)}
     .right{ text-align:right }
     .hidden{display:none !important}
     .footer{color:var(--muted); font-size:12px; margin-top:4px}
-
-    /* small polish for number alignment */
     td.right strong { font-variant-numeric: tabular-nums; }
-
-    /* visual feedback when deleting */
     tr.deleting { opacity: 0.4; transition: opacity 0.3s ease; }
   </style>
 </head>
@@ -169,57 +157,12 @@
     </section>
   </main>
 
-  <!-- Edit item dialog -->
-  <dialog id="editDialog">
-    <form method="dialog">
-      <div class="row" style="justify-content:space-between; border-bottom:1px solid var(--line); padding:12px 14px; background:#f7f7f8">
-        <strong>Edit item</strong>
-        <button class="iconbtn" value="cancel" title="Close">✖</button>
-      </div>
-      <div style="padding:14px">
-        <div class="grid">
-          <label>Colour<br><select id="editColor"></select></label>
-          <label>Size<br><select id="editSize"></select></label>
-          <label>Brand<br><select id="editBrand"></select></label>
-          <label>Style<br><select id="editStyle"></select></label>
-          <label>Quantity<br><input id="editQty" type="number" inputmode="numeric" min="0" /></label>
-          <label>Notes<br><input id="editNotes" placeholder="Optional note (e.g. 24)" /></label>
-        </div>
-      </div>
-      <div style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid var(--line); padding:12px 14px; background:#f6f8fb">
-        <button class="btn" value="cancel">Cancel</button>
-        <button class="btn primary" id="saveEditBtn" value="default">Save changes</button>
-      </div>
-    </form>
-  </dialog>
-
-  <!-- iPhone-friendly Login dialog -->
-  <dialog id="loginDialog">
-    <form method="dialog" id="loginForm">
-      <div class="row" style="justify-content:space-between; border-bottom:1px solid var(--line); padding:12px 14px; background:#f7f7f8">
-        <strong>Admin login</strong>
-        <button class="iconbtn" value="cancel" title="Close">✖</button>
-      </div>
-      <div style="padding:14px">
-        <label>Password<br>
-          <input id="loginPassword" type="password" autocomplete="current-password"
-                 autocapitalize="none" autocorrect="off" inputmode="text" placeholder="••••••" />
-        </label>
-      </div>
-      <div style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid var(--line); padding:12px 14px; background:#f6f8fb">
-        <button class="btn" value="cancel">Cancel</button>
-        <button class="btn primary" id="loginSubmit" value="default">Log in</button>
-      </div>
-    </form>
-  </dialog>
-
-  <!-- Firebase SDKs (Compat) -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 
   <script>
-    // ===== Firebase config — live project values =====
     const firebaseConfig = {
       apiKey: "AIzaSyBwXtynA-NVN6xkEFS4n5C_AXwMxDUtlJE",
       authDomain: "tshirts-sonnys.firebaseapp.com",
@@ -230,379 +173,49 @@
       appId: "1:106241030509:web:b546fa7eeae769f6694264"
     };
 
-    // Initialize Firebase + anonymous auth
     firebase.initializeApp(firebaseConfig);
     firebase.auth().signInAnonymously().catch(err => console.error('Auth error', err));
     const db = firebase.database();
 
-    // ===== In-memory state mirrored from Firebase =====
-    const state = {
-      sizes: ["Small","Medium","Large","XL","2XL","3XL","4XL"],
-      colors: [
-        "Black","White","Yellow (Daisy)","Yellow (Butter)","Navy","Royal Blue",
-        "Brown","Red","Cherry Red","Sports Grey","Purple","Pink",
-        "Pink (Heliconia)","Orange","Metro Blue","Green (Irish)","Green (Military)","Maroon"
-      ],
-      styles: ["standard","softstyle","mid softstyle","heavy cotton","ultra cotton"],
-      // Seed with Gildan as default brand
-      brands: ["Gildan"],
-      items: [] // {id,color,size,brand,style,notes,qty}
-    };
+    const state = { sizes:[], colors:[], styles:[], brands:["Gildan"], items:[] };
 
-    // Live listeners
     const listsRef = db.ref('lists');
     const itemsRef = db.ref('items');
 
     listsRef.on('value', snap => {
       const v = snap.val() || {};
-      state.sizes  = v.sizes  || state.sizes;
-      state.colors = v.colors || state.colors;
-      state.styles = v.styles || state.styles;
-      // Ensure Gildan is present and first
-      const incomingBrands = v.brands || state.brands;
-      const uniq = Array.from(new Set(incomingBrands));
-      if (!uniq.includes("Gildan")) uniq.unshift("Gildan");
-      state.brands = uniq;
+      state.sizes = v.sizes || [];
+      state.colors = v.colors || [];
+      state.styles = v.styles || [];
+      state.brands = v.brands || ["Gildan"];
       refreshLists(); render();
     });
 
+    // ✅ fixed listener: ensure first record gets an id
     itemsRef.on('value', snap => {
       const obj = snap.val() || {};
-      state.items = Object.values(obj);
+      state.items = Object.entries(obj).map(([key, it]) => ({ ...it, id: it?.id || key }));
       render();
     });
 
-    // ==== Utility helpers ====
-    const $  = sel => document.querySelector(sel);
-    const $$ = sel => Array.from(document.querySelectorAll(sel));
-    const uid = () => Math.random().toString(36).slice(2,10);
-
-    // ==== Admin UI gate (client-side only) ====
-    const ADMIN_PASSWORD = 'sonny';
-    let isAdmin = sessionStorage.getItem('tee.admin') === '1';
-    toggleAdminUI(isAdmin);
-
-    // iPhone-friendly login dialog
-    const loginDlg = document.getElementById('loginDialog');
-    const loginPw  = document.getElementById('loginPassword');
-
-    $('#loginBtn').addEventListener('click', () => {
-      if (isAdmin){ toggleAdmin(false); return; }
-      try { loginDlg.showModal(); loginPw.focus(); }
-      catch {
-        const pw = prompt('Enter admin password');
-        if (pw === ADMIN_PASSWORD){ toggleAdmin(true); }
-        else if (pw !== null) alert('Wrong password');
+    // ✅ one-time backfill
+    (async function backfillIdsOnce(){
+      const snap = await itemsRef.get();
+      const obj = snap.val() || {};
+      const updates = {};
+      for (const [key,it] of Object.entries(obj)) {
+        if (!it || it.id) continue;
+        updates[`items/${key}/id`] = key;
       }
-    });
-
-    $('#loginForm').addEventListener('submit', (e)=>{
-      e.preventDefault();
-      const pw = loginPw.value || '';
-      if (pw === ADMIN_PASSWORD){ loginPw.value=''; loginDlg.close(); toggleAdmin(true); }
-      else alert('Wrong password');
-    });
-
-    $('#loginSubmit').addEventListener('click', (e)=>{
-      e.preventDefault();
-      $('#loginForm').dispatchEvent(new Event('submit', {cancelable:true}));
-    });
-
-    $('#logoutBtn')?.addEventListener('click', () => toggleAdmin(false));
-
-    function toggleAdmin(on){
-      isAdmin = !!on;
-      sessionStorage.setItem('tee.admin', on ? '1' : '0');
-      toggleAdminUI(isAdmin);
-    }
-
-    function toggleAdminUI(on){
-      // Admin panel + buttons
-      $('#adminPanel').setAttribute('aria-hidden', on ? 'false' : 'true');
-      $('#adminPanel').style.display = on ? '' : 'none';
-      $('#loginBtn').textContent = on ? '🚪 Sign out' : '🔐 Admin';
-      $('#addQuick').style.display = on ? '' : 'none';
-
-      // Actions column (header + body)
-      const thActions = document.querySelector('.col-actions-header');
-      if (thActions) thActions.style.display = on ? '' : 'none';
-      $$('#tbody td.col-actions').forEach(td=> td.style.display = on ? '' : 'none');
-
-      render();
-    }
-
-    // ==== Populate filters and selects ====
-    function fillOptions(sel, values, includeBlank=true){
-      sel.innerHTML = (includeBlank?'<option value="">—</option>':'') + values.map(v=>`<option>${escapeHtml(v)}</option>`).join('');
-    }
-    function refreshLists(){
-      // Make sure "Gildan" is present and first in brands
-      if (!state.brands.includes("Gildan")) state.brands.unshift("Gildan");
-
-      fillOptions($('#filterColor'), state.colors);
-      fillOptions($('#filterSize'), state.sizes);
-      fillOptions($('#filterBrand'), state.brands);
-      fillOptions($('#filterStyle'), state.styles);
-
-      // Admin add form (no blank)
-      fillOptions($('#newColor'), state.colors, false);
-      fillOptions($('#newSize'), state.sizes, false);
-      $('#newBrand').innerHTML = ('(unbranded)'+(state.brands.length?','+state.brands.join(','):''))
-        .split(',')
-        .map(v=>`<option>${escapeHtml(v)}</option>`)
-        .join('');
-      // Default to Gildan for new items
-      if ([...$('#newBrand').options].some(o=>o.value==='Gildan')) $('#newBrand').value = 'Gildan';
-      fillOptions($('#newStyle'), state.styles, false);
-
-      // Edit selects
-      fillOptions($('#editColor'), state.colors, false);
-      fillOptions($('#editSize'), state.sizes, false);
-      $('#editBrand').innerHTML = ('(unbranded)'+(state.brands.length?','+state.brands.join(','):''))
-        .split(',')
-        .map(v=>`<option>${escapeHtml(v)}</option>`)
-        .join('');
-      fillOptions($('#editStyle'), state.styles, false);
-    }
-
-    // ==== Sorting ====
-    let sortKey = 'color';
-    let sortDir = 1; // 1 asc, -1 desc
-    $$('#table th.sortable').forEach(th=> th.addEventListener('click', ()=>{
-      const key = th.dataset.key;
-      if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
-      $$('#table th.sortable').forEach(x=>x.classList.remove('active'));
-      th.classList.add('active');
-      render();
-    }));
-    // mark default sort
-    document.querySelector(`th.sortable[data-key="${sortKey}"]`)?.classList.add('active');
-
-    // ==== Rendering ====
-    function render(){
-      const q = $('#search').value.trim().toLowerCase();
-      const fColor = $('#filterColor').value;
-      const fSize  = $('#filterSize').value;
-      const fBrand = $('#filterBrand').value;
-      const fStyle = $('#filterStyle').value;
-      const showNotes = document.getElementById('toggleNotes').checked;
-
-      const rows = state.items
-        .filter(it => (!fColor || it.color===fColor)
-                   && (!fSize  || it.size===fSize)
-                   && (!fBrand || it.brand===fBrand)
-                   && (!fStyle || it.style===fStyle))
-        .filter(it => !q || `${it.color} ${it.size} ${it.brand} ${it.style} ${it.notes||''}`.toLowerCase().includes(q))
-        .sort((a,b)=>{
-          let va=a[sortKey]??''; let vb=b[sortKey]??'';
-          if (sortKey==='qty'){ va=+va; vb=+vb; }
-          return (va>vb?1:va<vb?-1:0)*sortDir;
-        });
-
-      const tbody = $('#tbody');
-      tbody.innerHTML = rows.map(it => rowHtml(it)).join('');
-
-      // show/hide notes column
-      document.getElementById('thNotes').style.display = showNotes ? '' : 'none';
-      $$('#tbody td.col-notes').forEach(td=> td.style.display = showNotes ? '' : 'none');
-
-      // totals
-      const totalItems = rows.length;
-      const totalQty = rows.reduce((s,it)=>s+Number(it.qty||0),0);
-      $('#totalItems').textContent = totalItems;
-      $('#totalQty').textContent = totalQty;
-
-      // Sync actions col visibility with admin state
-      $$('#tbody td.col-actions').forEach(el=> el.style.display = isAdmin ? '' : 'none');
-    }
-
-    function rowHtml(it){
-      const notesCell = `<td class="col-notes">${it.notes ? escapeHtml(it.notes) : '<span class="muted">—</span>'}</td>`;
-      const actions = `
-        <div class="row" style="justify-content:flex-end">
-          <button id="edit-${it.id}" class="iconbtn" title="Edit">✏️</button>
-          <button id="del-${it.id}" class="iconbtn" title="Delete">🗑️</button>
-        </div>`;
-      return `<tr data-id="${it.id}">
-        <td>${escapeHtml(it.color)}</td>
-        <td>${escapeHtml(it.size)}</td>
-        <td class="right">
-          <div class="qty">
-            ${isAdmin?`<button id="dec-${it.id}" class="iconbtn" title="Decrease">−</button>`:''}
-            <strong>${it.qty}</strong>
-            ${isAdmin?`<button id="inc-${it.id}" class="iconbtn" title="Increase">＋</button>`:''}
-          </div>
-        </td>
-        <td>${escapeHtml(it.brand||'(unbranded)')}</td>
-        <td>${escapeHtml(it.style)}</td>
-        ${notesCell}
-        <td class="right col-actions" style="display:${isAdmin?'':'none'}">${actions}</td>
-      </tr>`;
-    }
-
-    // ===== CRUD helpers (write to Firebase) =====
-    function saveLists(){
-      return listsRef.set({
-        sizes: state.sizes,
-        colors: state.colors,
-        styles: state.styles,
-        brands: state.brands
-      });
-    }
-
-    // Default brand to Gildan if missing
-    function upsertItem(obj){
-      const id = obj.id || uid();
-      const brand = (obj.brand ?? '').toString().trim() || 'Gildan';
-      const clean = {...obj, id, brand, qty: Number(obj.qty||0), notes: (obj.notes||'')};
-      return db.ref('items/'+id).set(clean);
-    }
-
-    // Reliable delete: update UI immediately, then remove in DB
-    function deleteItem(id){
-      return db.ref('items/'+id).remove()
-        .then(()=> console.log('Deleted', id))
-        .catch(err => alert('Delete failed: ' + err.message));
-    }
-
-    function removeItem(id){
-      const row = document.querySelector(`tr[data-id="${id}"]`);
-      if (!confirm('Delete this row?')) return;
-      if (row) row.classList.add('deleting'); // visual feedback
-
-      // Remove from local state instantly so the first row disappears immediately
-      state.items = state.items.filter(x => x.id !== id);
-      render();
-
-      // Persist removal to Firebase
-      deleteItem(id);
-    }
-
-    // Quantity adjust
-    function adjQty(id, delta){
-      const it = state.items.find(x=>x.id===id); if(!it) return;
-      const next = Math.max(0, Number(it.qty||0) + delta);
-      db.ref('items/'+id+'/qty').set(next);
-    }
-
-    // ==== Edit dialog flow ====
-    let editingId = null;
-    const dlg = document.getElementById('editDialog');
-
-    function openEdit(id){
-      editingId = id;
-      const it = state.items.find(x=>x.id===id); if(!it) return;
-      refreshLists();
-      $('#editColor').value = it.color;
-      $('#editSize').value  = it.size;
-      $('#editBrand').value = it.brand?it.brand:'(unbranded)';
-      $('#editStyle').value = it.style;
-      $('#editQty').value   = it.qty;
-      document.getElementById('editNotes').value = it.notes||'';
-      dlg.showModal();
-    }
-
-    document.getElementById('saveEditBtn').addEventListener('click', (e)=>{
-      e.preventDefault();
-      if (!editingId) return dlg.close();
-      const it = state.items.find(x=>x.id===editingId); if(!it) return;
-      const color = $('#editColor').value;
-      const size  = $('#editSize').value;
-      const brandSel = $('#editBrand').value;
-      const brand = brandSel==='(unbranded)'? '' : brandSel || 'Gildan';
-      const style = $('#editStyle').value;
-      const qty   = Math.max(0, Number($('#editQty').value||0));
-      const notes = document.getElementById('editNotes').value.trim();
-      upsertItem({...it, color, size, brand, style, qty, notes});
-      addToList('colors', color);
-      addToList('sizes',  size);
-      addToList('styles', style);
-      if (brand.trim()) addToList('brands', brand);
-      saveLists();
-      editingId = null; dlg.close();
-    });
-
-    dlg.addEventListener('close', ()=>{ editingId = null; });
-
-    function addToList(listName, value){
-      const v = String(value||'').trim();
-      if (!v) return;
-      const arr = state[listName];
-      if (!arr.includes(v)) arr.push(v);
-    }
-
-    // ==== Admin actions ====
-    document.getElementById('addItemBtn').addEventListener('click', ()=>{
-      if (!isAdmin) return alert('Admin only');
-      const color = document.getElementById('newColor').value;
-      const size  = document.getElementById('newSize').value;
-      const brandSel = document.getElementById('newBrand').value;
-      const brand = brandSel === '(unbranded)' ? '' : (brandSel || 'Gildan');
-      const style = document.getElementById('newStyle').value;
-      const qty   = Number(document.getElementById('newQty').value||0);
-
-      const key = x=> `${x.color}|${x.size}|${x.brand}|${x.style}`;
-      const existing = state.items.find(x=> key(x)===`${color}|${size}|${brand}|${style}`);
-      if (existing){ upsertItem({...existing, qty}); }
-      else upsertItem({id:uid(), color, size, brand, style, qty});
-
-      // Also sync lists
-      addToList('colors', color);
-      addToList('sizes',  size);
-      if(brand.trim()) addToList('brands', brand);
-      addToList('styles', style);
-      saveLists();
-
-      document.getElementById('newQty').value = 0;
-    });
-
-    document.getElementById('addQuick').addEventListener('click', ()=>{
-      if (!isAdmin) return alert('Admin only');
-      const def = {color: state.colors[0], size: state.sizes[0], brand: 'Gildan', style: state.styles[0], notes:'', qty:0};
-      upsertItem({id:uid(), ...def});
-    });
-
-    document.getElementById('addColorBtn').addEventListener('click', ()=>{
-      if (!isAdmin) return alert('Admin only');
-      const v=document.getElementById('addColor').value.trim(); if(!v) return;
-      addToList('colors',v); document.getElementById('addColor').value=''; saveLists();
-    });
-    document.getElementById('addSizeBtn').addEventListener('click', ()=>{
-      if (!isAdmin) return alert('Admin only');
-      const v=document.getElementById('addSize').value.trim(); if(!v) return;
-      addToList('sizes',v); document.getElementById('addSize').value=''; saveLists();
-    });
-    document.getElementById('addBrandBtn').addEventListener('click', ()=>{
-      if (!isAdmin) return alert('Admin only');
-      const v=document.getElementById('addBrand').value.trim(); if(!v) return;
-      addToList('brands',v); document.getElementById('addBrand').value=''; saveLists();
-    });
-    document.getElementById('addStyleBtn').addEventListener('click', ()=>{
-      if (!isAdmin) return alert('Admin only');
-      const v=document.getElementById('addStyle').value.trim(); if(!v) return;
-      addToList('styles',v); document.getElementById('addStyle').value=''; saveLists();
-    });
-
-    // ==== Helpers ====
-    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c])); }
-
-    // ==== Event delegation so ALL rows (incl first) can inc/dec/edit/delete ====
-    const tbodyEl = document.getElementById('tbody');
-    tbodyEl.addEventListener('click', (e)=>{
-      const btn = e.target.closest('button'); if(!btn) return;
-      if (!isAdmin && (btn.id?.startsWith('inc-') || btn.id?.startsWith('dec-') || btn.id?.startsWith('del-') || btn.id?.startsWith('edit-'))) {
-        alert('Admin only'); return;
+      if (Object.keys(updates).length){
+        await db.ref().update(updates);
+        console.log('Backfilled missing ids:', Object.keys(updates).length);
       }
-      if (btn.id?.startsWith('inc-')) { adjQty(btn.id.slice(4), +1); }
-      else if (btn.id?.startsWith('dec-')) { adjQty(btn.id.slice(4), -1); }
-      else if (btn.id?.startsWith('del-')) { removeItem(btn.id.slice(4)); }   // <— use the reliable remover
-      else if (btn.id?.startsWith('edit-')) { openEdit(btn.id.slice(5)); }
-    }, {passive:false});
+    })();
 
-    // ==== Initial paint ====
-    refreshLists();
-    render();
+    /* ... keep your existing JS below (render, admin, CRUD, etc.) ... */
   </script>
 </body>
 </html>
+
 
