@@ -267,29 +267,57 @@
     let isAdmin = sessionStorage.getItem('tee.admin') === '1';
     toggleAdminUI(isAdmin);
 
-    // Login dialog wiring
+    // Login dialog wiring (robust with fallback + timeout)
     const loginDlg = document.getElementById('loginDialog');
     const loginPw  = document.getElementById('loginPassword');
 
-    document.getElementById('loginBtn').addEventListener('click', () => {
-      if (isAdmin){ toggleAdmin(false); return; }
-      try { loginDlg.showModal(); loginPw.focus(); }
-      catch {
-        const pw = prompt('Enter admin password');
-        if (pw === ADMIN_PASSWORD){ toggleAdmin(true); }
-        else if (pw !== null) alert('Wrong password');
+    function handlePassword(pw){
+      const val = (pw || '').trim();
+      if (val === ADMIN_PASSWORD){
+        try { if (loginDlg?.open) loginDlg.close(); } catch {}
+        if (loginPw) loginPw.value = '';
+        toggleAdmin(true);
+      } else if (val) {
+        alert('Wrong password');
       }
+    }
+
+    function openLogin(){
+      if (isAdmin){ toggleAdmin(false); return; }
+      // Try dialog first
+      try {
+        if (typeof loginDlg?.showModal === 'function'){
+          loginDlg.showModal();
+          if (loginPw) loginPw.focus();
+          // If dialog failed silently (some iOS/embedded browsers), fallback after a tick
+          setTimeout(()=>{ if (!loginDlg.open){ const pw = prompt('Enter admin password'); handlePassword(pw); } }, 300);
+        } else {
+          const pw = prompt('Enter admin password'); handlePassword(pw);
+        }
+      } catch {
+        const pw = prompt('Enter admin password'); handlePassword(pw);
+      }
+    }
+
+    const loginBtnEl = document.getElementById('loginBtn');
+    if (loginBtnEl) loginBtnEl.addEventListener('click', openLogin);
+
+    const loginFormEl = document.getElementById('loginForm');
+    if (loginFormEl) loginFormEl.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      handlePassword(loginPw?.value);
     });
 
-    document.getElementById('loginForm').addEventListener('submit', (e)=>{
+    const loginSubmitEl = document.getElementById('loginSubmit');
+    if (loginSubmitEl) loginSubmitEl.addEventListener('click', (e)=>{
       e.preventDefault();
-      const pw = loginPw.value || '';
-      if (pw === ADMIN_PASSWORD){ loginPw.value=''; loginDlg.close(); toggleAdmin(true); }
-      else alert('Wrong password');
+      handlePassword(loginPw?.value);
     });
 
-    document.getElementById('loginSubmit').addEventListener('click', (e)=>{
-      e.preventDefault();
+    // Enter key convenience inside password field
+    if (loginPw) loginPw.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter'){ e.preventDefault(); handlePassword(loginPw.value); }
+    });
       document.getElementById('loginForm').dispatchEvent(new Event('submit', {cancelable:true}));
     });
 
