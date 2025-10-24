@@ -62,27 +62,37 @@
     td.right strong { font-variant-numeric: tabular-nums; }
     tr.deleting { opacity: 0.4; transition: opacity 0.3s ease; }
 
-    /* ✅ Thinner, darker separators */
+    /* ===== Separator: make it just a thin line with minimal height ===== */
     tr.separator td{
-      background:#eef1f4;
-      color:#374151;
-      font-style:normal;
-      border-top:1px solid var(--line);
-      border-bottom:1px solid var(--line);
-      padding-top:4px;
-      padding-bottom:4px;
-      line-height:1.1;
+      background: transparent;
+      color: var(--muted);
+      font-style: normal;
+      border-top: 1px solid var(--line);  /* single line */
+      border-bottom: 0;
+      padding-top: 2px;                   /* very thin row */
+      padding-bottom: 2px;
+      line-height: 1;
     }
-    tr.separator:hover td{ background:#e9edf2; }
-    tr.separator td .sep-label{ opacity:.85; }
+    tr.separator:hover td{ background: transparent; }
+    tr.separator td .sep-label{ opacity:.7; font-size:12px; }
     tr.separator td .sep-actions{ display:flex; gap:8px; justify-content:flex-end; }
 
     /* Hide actions when not admin (toggled via JS as well) */
     .col-actions-header{ display:none; }
 
-    /* ✨ Hide Notes column when off */
+    /* Hide Notes column when toggle is off */
     body.hide-notes th:nth-child(6),
     body.hide-notes td.col-notes { display:none; }
+
+    /* ===== Phone-only compact tweaks: restore original fit without changing layout ===== */
+    @media (max-width: 420px){
+      header .wrap{ padding:10px 12px; } /* was 16px */
+      .panel{ padding:10px; }            /* was 14px */
+      th, td{ padding:10px; }            /* was 12px */
+      /* Make the Show notes toggle compact on phones */
+      label.btn.ghost:has(#toggleNotes){ padding:4px 6px; font-size:12px; min-height:auto; }
+      #toggleNotes{ width:14px; height:14px; }
+    }
   </style>
 </head>
 <body>
@@ -96,7 +106,7 @@
         <div class="spacer"></div>
         <span class="muted">Total items: <strong id="totalItems">0</strong> • Total qty: <strong id="totalQty">0</strong></span>
 
-        <!-- ✨ Show notes toggle -->
+        <!-- Show notes toggle -->
         <label class="btn ghost" style="display:inline-flex; align-items:center; gap:8px; cursor:pointer">
           <input id="toggleNotes" type="checkbox" style="width:16px; height:16px; accent-color:#111827" />
           Show notes
@@ -173,7 +183,7 @@
     </form>
   </dialog>
 
-  <!-- iPhone-friendly Login dialog (kept as-is) -->
+  <!-- Admin login dialog -->
   <dialog id="loginDialog">
     <form method="dialog" id="loginForm">
       <div class="row" style="justify-content:space-between; border-bottom:1px solid var(--line); padding:12px 14px; background:#f7f7f8">
@@ -638,9 +648,10 @@
     refreshLists();
     render();
 
-    // ✨ Notes column toggle (remembers per session)
+    // Notes column toggle (remembers per session)
     const SHOW_NOTES_KEY = 'tee.showNotes';
     const toggleNotesEl = document.getElementById('toggleNotes');
+
     const showNotes = sessionStorage.getItem(SHOW_NOTES_KEY) === '1';
     document.body.classList.toggle('hide-notes', !showNotes);
     if (toggleNotesEl) toggleNotesEl.checked = showNotes;
