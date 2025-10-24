@@ -411,9 +411,6 @@
     }
     function deleteItem(id){ return db.ref('items/'+id).remove(); }
 
-    const listsRef = db.ref('lists');
-    const itemsRef = db.ref('items');
-
     // Quantity adjust
     function adjQty(id, delta){
       const it = state.items.find(x=>x.id===id); if(!it) return;
@@ -518,4 +515,5 @@
   </script>
 </body>
 </html>
+
 
