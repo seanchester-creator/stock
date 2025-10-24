@@ -250,10 +250,11 @@
 
     listsRef.on('value', snap => {
       const v = snap.val() || {};
-      state.sizes = v.sizes || state.sizes;
-      state.colors = (v.colors || state.colors).filter(c=>!BANNED_COLORS.includes(c));
-      state.styles = v.styles || state.styles;
-      state.brands = v.brands || state.brands;
+      const getList = (arr, fallback) => (Array.isArray(arr) && arr.length ? arr : fallback);
+      state.sizes  = getList(v.sizes, state.sizes);
+      state.colors = getList(v.colors, state.colors).filter(c=>!BANNED_COLORS.includes(c));
+      state.styles = getList(v.styles, state.styles);
+      state.brands = getList(v.brands, state.brands);
       refreshLists(); render();
     });
 
@@ -544,6 +545,7 @@
   </script>
 </body>
 </html>
+
 
 
 
