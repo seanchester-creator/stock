@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="theme-color" content="#eef1f4" />
-  <title>sonny's stock inventory</title>
+  <title>Stock Inventory</title>
   <style>
     :root{
       --bg:#f6f7f9;
@@ -37,17 +37,10 @@
     .logo{display:flex; align-items:center; gap:12px}
     .logo img{height:60px; width:auto}
 
-    .btn{appearance:none; border:1px solid var(--line); background:#fff; color:#111827; padding:12px 14px; border-radius:12px; cursor:pointer; font-weight:600; min-height:44px}
+    .btn{appearance:none; border:1px solid var(--line); background:#fff; color:#111827; padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:600; min-height:40px}
     .btn:hover{border-color:var(--accent)}
     .btn.primary{background:var(--accent); color:#fff; border-color:#111827}
     .btn.ghost{background:transparent}
-
-    .toolbar{margin-top:8px; display:flex; gap:10px; flex-wrap:wrap}
-    input, select{
-      background:#fff; color:#0b1220; border:1px solid var(--line);
-      padding:10px 12px; border-radius:12px; outline:none; min-height:44px; font-size:16px
-    }
-    input:focus, select:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-weak)}
 
     main{max-width:1100px; margin:20px auto; padding:0 16px 80px}
 
@@ -58,25 +51,33 @@
     thead th{position:sticky; top:0; background:var(--panel); z-index:2}
     th, td{ text-align:left; padding:12px; border-bottom:1px solid var(--line); vertical-align:middle}
     tr:hover td{ background:#f9fafb }
-    th.sortable{cursor:pointer}
-    th.sortable span{opacity:.7}
-    th.sortable.active span{opacity:1; color:#111}
+    th span{opacity:1}
 
     .qty{display:inline-flex; align-items:center; gap:8px}
-    .iconbtn{width:40px; height:40px; display:inline-grid; place-items:center; border-radius:10px; border:1px solid var(--line); background:#fff; cursor:pointer}
+    .iconbtn{width:36px; height:36px; display:inline-grid; place-items:center; border-radius:10px; border:1px solid var(--line); background:#fff; cursor:pointer}
     .iconbtn:hover{border-color:var(--accent)}
-
-    .grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:12px}
     .muted{color:var(--muted)}
     .right{ text-align:right }
-    .hidden{display:none !important}
     .footer{color:var(--muted); font-size:12px; margin-top:4px}
-
-    /* small polish for number alignment */
     td.right strong { font-variant-numeric: tabular-nums; }
-
-    /* visual feedback when deleting */
     tr.deleting { opacity: 0.4; transition: opacity 0.3s ease; }
+
+    /* Separator rows */
+    tr.separator td{
+      background:#fafafa;
+      color:#6b7280;
+      font-style:italic;
+      border-bottom:1px dashed var(--line);
+    }
+    tr.separator td .sep-label{
+      opacity:.85;
+    }
+    tr.separator td .sep-actions{
+      display:flex; gap:8px; justify-content:flex-end;
+    }
+
+    /* Hide actions when not admin (toggled via JS as well) */
+    .col-actions-header{ display:none; }
   </style>
 </head>
 <body>
@@ -85,22 +86,11 @@
       <div class="row">
         <div class="logo">
           <img alt="Sonny logo" src="https://sonny.org.uk/cdn/shop/files/logo.png?v=1723800320&width=300" />
-          <div><h1>sonny's stock inventory</h1></div>
+          <div><h1>Stock Inventory</h1></div>
         </div>
         <div class="spacer"></div>
-        <button id="loginBtn" class="btn" title="Admin area">🔐 Admin</button>
-      </div>
-      <div class="toolbar">
-        <input id="search" type="search" placeholder="Search color, size, brand, style…" />
-        <select id="filterColor"><option value="">All colours</option></select>
-        <select id="filterSize"><option value="">All sizes</option></select>
-        <select id="filterBrand"><option value="">All brands</option></select>
-        <select id="filterStyle"><option value="">All styles</option></select>
-        <label class="row" style="gap:6px;align-items:center;margin-left:8px">
-          <input type="checkbox" id="toggleNotes"> Show notes
-        </label>
-        <div class="spacer"></div>
         <span class="muted">Total items: <strong id="totalItems">0</strong> • Total qty: <strong id="totalQty">0</strong></span>
+        <button id="loginBtn" class="btn" title="Admin area">🔐 Admin</button>
       </div>
     </div>
   </header>
@@ -108,59 +98,37 @@
   <main>
     <section class="panel" id="adminPanel" aria-hidden="true" style="display:none">
       <h3>Admin controls</h3>
-      <div class="grid">
-        <div>
-          <label class="muted">Add or update inventory</label>
-          <div class="row" style="margin-top:6px; gap:6px">
-            <select id="newColor"></select>
-            <select id="newSize"></select>
-            <select id="newBrand"></select>
-            <select id="newStyle"></select>
-            <input id="newQty" type="number" inputmode="numeric" min="0" value="0" style="width:120px"/>
-          </div>
-          <div class="row" style="margin-top:6px; gap:10px; align-items:center">
-            <button class="btn primary" id="addItemBtn">➕ Add/Update</button>
-          </div>
-        </div>
-        <div>
-          <label class="muted">Manage lists</label>
-          <div class="row" style="margin-top:6px; gap:6px">
-            <input id="addColor" placeholder="Add colour"/>
-            <button class="btn" id="addColorBtn">Add</button>
-          </div>
-          <div class="row" style="margin-top:6px; gap:6px">
-            <input id="addSize" placeholder="Add size"/>
-            <button class="btn" id="addSizeBtn">Add</button>
-          </div>
-          <div class="row" style="margin-top:6px; gap:6px">
-            <input id="addBrand" placeholder="Add brand"/>
-            <button class="btn" id="addBrandBtn">Add</button>
-          </div>
-          <div class="row" style="margin-top:6px; gap:6px">
-            <input id="addStyle" placeholder="Add style"/>
-            <button class="btn" id="addStyleBtn">Add</button>
-          </div>
+      <div class="row" style="gap:8px; flex-wrap:wrap">
+        <div class="row" style="gap:6px; flex-wrap:wrap">
+          <select id="newColor"></select>
+          <select id="newSize"></select>
+          <select id="newBrand"></select>
+          <select id="newStyle"></select>
+          <input id="newQty" type="number" inputmode="numeric" min="0" value="0" style="width:120px"/>
+          <button class="btn primary" id="addItemBtn">➕ Add / Update</button>
+          <button class="btn" id="addQuick" title="Add a new blank stock row with defaults">New row</button>
+          <button class="btn" id="addSeparatorBtn" title="Insert a blank separator line">Add separator</button>
         </div>
       </div>
+      <div class="footer">Tip: use the ▲/▼ buttons to reorder rows (separators included). Order is saved.</div>
     </section>
 
     <section class="panel" style="margin-top:14px">
       <div class="row" style="align-items:flex-end">
         <h3 style="margin-right:8px">Current stock</h3>
         <div class="spacer"></div>
-        <button class="btn" id="addQuick" title="Add a new blank row with defaults (admin)" style="display:none">New row</button>
       </div>
       <div style="overflow:auto; border-radius:12px; border:1px solid var(--line); margin-top:10px; -webkit-overflow-scrolling:touch">
         <table id="table">
           <thead>
             <tr>
-              <th class="sortable" data-key="color"><span>Colour</span></th>
-              <th class="sortable" data-key="size"><span>Size</span></th>
-              <th class="sortable right" data-key="qty"><span>Qty</span></th>
-              <th class="sortable" data-key="brand"><span>Brand</span></th>
-              <th class="sortable" data-key="style"><span>Style</span></th>
-              <th id="thNotes"><span>Notes</span></th>
-              <th class="right col-actions-header" style="display:none">Actions</th>
+              <th><span>Colour</span></th>
+              <th><span>Size</span></th>
+              <th class="right"><span>Qty</span></th>
+              <th><span>Brand</span></th>
+              <th><span>Style</span></th>
+              <th><span>Notes</span></th>
+              <th class="right col-actions-header">Actions</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -177,7 +145,7 @@
         <button class="iconbtn" value="cancel" title="Close">✖</button>
       </div>
       <div style="padding:14px">
-        <div class="grid">
+        <div class="row" style="gap:10px; flex-wrap:wrap">
           <label>Colour<br><select id="editColor"></select></label>
           <label>Size<br><select id="editSize"></select></label>
           <label>Brand<br><select id="editBrand"></select></label>
@@ -193,7 +161,7 @@
     </form>
   </dialog>
 
-  <!-- iPhone-friendly Login dialog -->
+  <!-- iPhone-friendly Login dialog (kept as-is) -->
   <dialog id="loginDialog">
     <form method="dialog" id="loginForm">
       <div class="row" style="justify-content:space-between; border-bottom:1px solid var(--line); padding:12px 14px; background:#f7f7f8">
@@ -243,10 +211,11 @@
         "Brown","Red","Cherry Red","Sports Grey","Purple","Pink",
         "Pink (Heliconia)","Orange","Metro Blue","Green (Irish)","Green (Military)","Maroon"
       ],
-      styles: ["standard","softstyle","mid softstyle","heavy cotton","ultra cotton"],
+      // Note the style label change here
+      styles: ["standard","soft style","mid softstyle","heavy cotton","ultra cotton"],
       // Seed with Gildan as default brand
       brands: ["Gildan"],
-      items: [] // {id,color,size,brand,style,notes,qty}
+      items: [] // {id,color,size,brand,style,notes,qty,ord,separator?:true,label?:string}
     };
 
     // Live listeners
@@ -257,22 +226,34 @@
       const v = snap.val() || {};
       state.sizes  = v.sizes  || state.sizes;
       state.colors = v.colors || state.colors;
-      state.styles = v.styles || state.styles;
-      // Ensure Gildan is present and first
+      state.styles = (v.styles || state.styles).map(s => s === 'softstyle' ? 'soft style' : s); // migrate label
+      // Ensure Gildan present & first
       const incomingBrands = v.brands || state.brands;
       const uniq = Array.from(new Set(incomingBrands));
       if (!uniq.includes("Gildan")) uniq.unshift("Gildan");
       state.brands = uniq;
-      refreshLists(); render();
+      refreshLists();
+      render();
     });
 
-    // ✅ FIX: ensure every item has an id (falls back to DB key)
+    // Ensure every item has id & stable ord; migrate softstyle -> soft style
     itemsRef.on('value', snap => {
       const obj = snap.val() || {};
-      state.items = Object.entries(obj).map(([key, it]) => ({
-        ...it,
-        id: it?.id || key
-      }));
+      let index = 0;
+      state.items = Object.entries(obj).map(([key, it]) => {
+        const convertedStyle = it?.style === 'softstyle' ? 'soft style' : it?.style;
+        const item = {
+          ...it,
+          id: it?.id || key,
+          style: convertedStyle,
+          ord: Number.isFinite(+it?.ord) ? +it.ord : index++ // assign ord if missing
+        };
+        // If style migrated, push update (non-blocking)
+        if (it?.style === 'softstyle') {
+          db.ref('items/'+(it.id||key)+'/style').set('soft style').catch(()=>{});
+        }
+        return item;
+      }).sort((a,b)=> (a.ord ?? 0) - (b.ord ?? 0));
       render();
     });
 
@@ -280,13 +261,13 @@
     const $  = sel => document.querySelector(sel);
     const $$ = sel => Array.from(document.querySelectorAll(sel));
     const uid = () => Math.random().toString(36).slice(2,10);
+    const escapeHtml = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
 
-    // ==== Admin UI gate (client-side only) ====
+    // ==== Admin UI gate (client-side only, kept) ====
     const ADMIN_PASSWORD = 'sonny';
     let isAdmin = sessionStorage.getItem('tee.admin') === '1';
     toggleAdminUI(isAdmin);
 
-    // iPhone-friendly login dialog
     const loginDlg = document.getElementById('loginDialog');
     const loginPw  = document.getElementById('loginPassword');
 
@@ -312,8 +293,6 @@
       $('#loginForm').dispatchEvent(new Event('submit', {cancelable:true}));
     });
 
-    $('#logoutBtn')?.addEventListener('click', () => toggleAdmin(false));
-
     function toggleAdmin(on){
       isAdmin = !!on;
       sessionStorage.setItem('tee.admin', on ? '1' : '0');
@@ -321,13 +300,10 @@
     }
 
     function toggleAdminUI(on){
-      // Admin panel + buttons
       $('#adminPanel').setAttribute('aria-hidden', on ? 'false' : 'true');
       $('#adminPanel').style.display = on ? '' : 'none';
       $('#loginBtn').textContent = on ? '🚪 Sign out' : '🔐 Admin';
-      $('#addQuick').style.display = on ? '' : 'none';
 
-      // Actions column (header + body)
       const thActions = document.querySelector('.col-actions-header');
       if (thActions) thActions.style.display = on ? '' : 'none';
       $$('#tbody td.col-actions').forEach(td=> td.style.display = on ? '' : 'none');
@@ -335,78 +311,49 @@
       render();
     }
 
-    // ==== Populate filters and selects ====
+    // ==== Populate selects ====
     function fillOptions(sel, values, includeBlank=true){
       sel.innerHTML = (includeBlank?'<option value="">—</option>':'') + values.map(v=>`<option>${escapeHtml(v)}</option>`).join('');
+    }
+    function fillBrandSelect(sel, includeUnbranded=true){
+      const brands = includeUnbranded ? ['(unbranded)', ...state.brands] : [...state.brands];
+      sel.innerHTML = brands.map(v => `<option>${escapeHtml(v)}</option>`).join('');
     }
     function refreshLists(){
       // Make sure "Gildan" is present and first in brands
       if (!state.brands.includes("Gildan")) state.brands.unshift("Gildan");
 
-      fillOptions($('#filterColor'), state.colors);
-      fillOptions($('#filterSize'), state.sizes);
-      fillOptions($('#filterBrand'), state.brands);
-      fillOptions($('#filterStyle'), state.styles);
+      // Default styles with “soft style” label
+      state.styles = state.styles.map(s => s === 'softstyle' ? 'soft style' : s);
+      if (!state.styles.includes('heavy cotton')) state.styles.push('heavy cotton');
 
       // Admin add form (no blank)
       fillOptions($('#newColor'), state.colors, false);
       fillOptions($('#newSize'), state.sizes, false);
-      $('#newBrand').innerHTML = ('(unbranded)'+(state.brands.length?','+state.brands.join(','):''))        .split(',')        .map(v=>`<option>${escapeHtml(v)}</option>`)        .join('');
-      // Default to Gildan for new items
+      fillBrandSelect($('#newBrand'));  // includes (unbranded)
       if ([...$('#newBrand').options].some(o=>o.value==='Gildan')) $('#newBrand').value = 'Gildan';
       fillOptions($('#newStyle'), state.styles, false);
+      // Default to heavy cotton
+      if ([...$('#newStyle').options].some(o=>o.value==='heavy cotton')) $('#newStyle').value = 'heavy cotton';
 
       // Edit selects
       fillOptions($('#editColor'), state.colors, false);
       fillOptions($('#editSize'), state.sizes, false);
-      $('#editBrand').innerHTML = ('(unbranded)'+(state.brands.length?','+state.brands.join(','):''))        .split(',')        .map(v=>`<option>${escapeHtml(v)}</option>`)        .join('');
+      fillBrandSelect($('#editBrand')); // includes (unbranded)
       fillOptions($('#editStyle'), state.styles, false);
     }
 
-    // ==== Sorting ====
-    let sortKey = 'color';
-    let sortDir = 1; // 1 asc, -1 desc
-    $$('#table th.sortable').forEach(th=> th.addEventListener('click', ()=>{
-      const key = th.dataset.key;
-      if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
-      $$('#table th.sortable').forEach(x=>x.classList.remove('active'));
-      th.classList.add('active');
-      render();
-    }));
-    // mark default sort
-    document.querySelector(`th.sortable[data-key="${sortKey}"]`)?.classList.add('active');
-
-    // ==== Rendering ====
+    // ==== Rendering (ordered) ====
     function render(){
-      const q = $('#search').value.trim().toLowerCase();
-      const fColor = $('#filterColor').value;
-      const fSize  = $('#filterSize').value;
-      const fBrand = $('#filterBrand').value;
-      const fStyle = $('#filterStyle').value;
-      const showNotes = document.getElementById('toggleNotes').checked;
-
-      const rows = state.items
-        .filter(it => (!fColor || it.color===fColor)
-                   && (!fSize  || it.size===fSize)
-                   && (!fBrand || it.brand===fBrand)
-                   && (!fStyle || it.style===fStyle))
-        .filter(it => !q || `${it.color} ${it.size} ${it.brand} ${it.style} ${it.notes||''}`.toLowerCase().includes(q))
-        .sort((a,b)=>{
-          let va=a[sortKey]??''; let vb=b[sortKey]??'';
-          if (sortKey==='qty'){ va=+va; vb=+vb; }
-          return (va>vb?1:va<vb?-1:0)*sortDir;
-        });
-
+      // Always sort by ord ascending for display
+      const rows = [...state.items].sort((a,b)=> (a.ord ?? 0) - (b.ord ?? 0));
       const tbody = $('#tbody');
       tbody.innerHTML = rows.map(it => rowHtml(it)).join('');
 
-      // show/hide notes column
-      document.getElementById('thNotes').style.display = showNotes ? '' : 'none';
-      $$('#tbody td.col-notes').forEach(td=> td.style.display = showNotes ? '' : 'none');
-
-      // totals
-      const totalItems = rows.length;
-      const totalQty = rows.reduce((s,it)=>s+Number(it.qty||0),0);
+      // totals (exclude separators)
+      const stockRows = rows.filter(r => !r.separator);
+      const totalItems = stockRows.length;
+      const totalQty = stockRows.reduce((s,it)=> s + Number(it.qty||0), 0);
       $('#totalItems').textContent = totalItems;
       $('#totalQty').textContent = totalQty;
 
@@ -415,24 +362,42 @@
     }
 
     function rowHtml(it){
+      if (it.separator) {
+        return `<tr class="separator" data-id="${it.id}">
+          <td colspan="6">
+            <span class="sep-label">${escapeHtml(it.label || '')}</span>
+          </td>
+          <td class="right col-actions" style="display:${isAdmin?'':'none'}">
+            <div class="sep-actions">
+              <button id="up-${it.id}" class="iconbtn" title="Move up">▲</button>
+              <button id="down-${it.id}" class="iconbtn" title="Move down">▼</button>
+              <button id="editsep-${it.id}" class="iconbtn" title="Edit label">✏️</button>
+              <button id="del-${it.id}" class="iconbtn" title="Delete">🗑️</button>
+            </div>
+          </td>
+        </tr>`;
+      }
+
       const notesCell = `<td class="col-notes">${it.notes ? escapeHtml(it.notes) : '<span class="muted">—</span>'}</td>`;
       const actions = `
-        <div class="row" style="justify-content:flex-end">
+        <div class="row" style="justify-content:flex-end; gap:6px">
+          <button id="up-${it.id}" class="iconbtn" title="Move up">▲</button>
+          <button id="down-${it.id}" class="iconbtn" title="Move down">▼</button>
           <button id="edit-${it.id}" class="iconbtn" title="Edit">✏️</button>
           <button id="del-${it.id}" class="iconbtn" title="Delete">🗑️</button>
         </div>`;
       return `<tr data-id="${it.id}">
-        <td>${escapeHtml(it.color)}</td>
-        <td>${escapeHtml(it.size)}</td>
+        <td>${escapeHtml(it.color||'')}</td>
+        <td>${escapeHtml(it.size||'')}</td>
         <td class="right">
           <div class="qty">
             ${isAdmin?`<button id="dec-${it.id}" class="iconbtn" title="Decrease">−</button>`:''}
-            <strong>${it.qty}</strong>
+            <strong>${it.qty ?? 0}</strong>
             ${isAdmin?`<button id="inc-${it.id}" class="iconbtn" title="Increase">＋</button>`:''}
           </div>
         </td>
         <td>${escapeHtml(it.brand||'(unbranded)')}</td>
-        <td>${escapeHtml(it.style)}</td>
+        <td>${escapeHtml(it.style||'')}</td>
         ${notesCell}
         <td class="right col-actions" style="display:${isAdmin?'':'none'}">${actions}</td>
       </tr>`;
@@ -448,39 +413,82 @@
       });
     }
 
-    // Default brand to Gildan if missing
+    // Default brand to Gildan if missing, default style to heavy cotton, ord optional
     function upsertItem(obj){
       const id = obj.id || uid();
       const brand = (obj.brand ?? '').toString().trim() || 'Gildan';
-      const clean = {...obj, id, brand, qty: Number(obj.qty||0), notes: (obj.notes||'')};
+      const style = (obj.style ?? '').toString().trim() || 'heavy cotton';
+      const clean = {
+        ...obj,
+        id,
+        brand,
+        style,
+        qty: Number(obj.qty||0),
+        notes: (obj.notes||''),
+        ord: Number.isFinite(+obj.ord) ? +obj.ord : nextOrd()
+      };
       return db.ref('items/'+id).set(clean);
     }
 
-    // Reliable delete: update UI immediately, then remove in DB
     function deleteItem(id){
       return db.ref('items/'+id).remove()
-        .then(()=> console.log('Deleted', id))
-        .catch(err => alert('Delete failed: ' + err.message));
+        .then(()=> console.log('Deleted', id));
     }
 
     function removeItem(id){
+      const original = state.items.slice();
       const row = document.querySelector(`tr[data-id="${id}"]`);
       if (!confirm('Delete this row?')) return;
-      if (row) row.classList.add('deleting'); // visual feedback
+      if (row) row.classList.add('deleting');
 
-      // Remove from local state instantly so the first row disappears immediately
       state.items = state.items.filter(x => x.id !== id);
       render();
 
-      // Persist removal to Firebase
-      deleteItem(id);
+      deleteItem(id).catch(err => {
+        alert('Delete failed: ' + err.message);
+        state.items = original;
+        render();
+      });
     }
 
-    // Quantity adjust
     function adjQty(id, delta){
-      const it = state.items.find(x=>x.id===id); if(!it) return;
-      const next = Math.max(0, Number(it.qty||0) + delta);
+      const it = state.items.find(x=>x.id===id); if(!it || it.separator) return;
+      const current = Number(it.qty||0);
+      if (delta < 0 && current === 0) return;
+      const next = Math.max(0, current + delta);
       db.ref('items/'+id+'/qty').set(next);
+    }
+
+    // ===== Ordering (move up/down) =====
+    function nextOrd(){
+      if (!state.items.length) return 0;
+      return Math.max(...state.items.map(i => +i.ord || 0)) + 1;
+    }
+
+    function swapOrd(idA, idB){
+      const a = state.items.find(i=>i.id===idA);
+      const b = state.items.find(i=>i.id===idB);
+      if (!a || !b) return;
+      const oa = a.ord ?? 0;
+      const ob = b.ord ?? 0;
+      // Optimistic UI
+      a.ord = ob; b.ord = oa;
+      render();
+      // Persist
+      const pa = db.ref('items/'+a.id+'/ord').set(ob);
+      const pb = db.ref('items/'+b.id+'/ord').set(oa);
+      Promise.all([pa,pb]).catch(err=>{
+        alert('Reorder failed: ' + err.message);
+      });
+    }
+
+    function move(id, dir){ // dir: -1 up, +1 down
+      const ordered = [...state.items].sort((a,b)=>(a.ord??0)-(b.ord??0));
+      const idx = ordered.findIndex(i=>i.id===id);
+      if (idx < 0) return;
+      const swapIdx = idx + dir;
+      if (swapIdx < 0 || swapIdx >= ordered.length) return;
+      swapOrd(ordered[idx].id, ordered[swapIdx].id);
     }
 
     // ==== Edit dialog flow ====
@@ -490,12 +498,20 @@
     function openEdit(id){
       editingId = id;
       const it = state.items.find(x=>x.id===id); if(!it) return;
+      if (it.separator){
+        const label = prompt('Separator label (optional):', it.label || '');
+        if (label !== null){
+          db.ref('items/'+id+'/label').set(label);
+        }
+        editingId = null;
+        return;
+      }
       refreshLists();
-      $('#editColor').value = it.color;
-      $('#editSize').value  = it.size;
-      $('#editBrand').value = it.brand?it.brand:'(unbranded)';
-      $('#editStyle').value = it.style;
-      $('#editQty').value   = it.qty;
+      $('#editColor').value = it.color || state.colors[0] || '';
+      $('#editSize').value  = it.size  || state.sizes[0]  || '';
+      $('#editBrand').value = it.brand ? it.brand : '(unbranded)';
+      $('#editStyle').value = it.style || 'heavy cotton';
+      $('#editQty').value   = it.qty ?? 0;
       document.getElementById('editNotes').value = it.notes||'';
       dlg.showModal();
     }
@@ -508,7 +524,7 @@
       const size  = $('#editSize').value;
       const brandSel = $('#editBrand').value;
       const brand = brandSel==='(unbranded)'? '' : brandSel || 'Gildan';
-      const style = $('#editStyle').value;
+      const style = ($('#editStyle').value === 'softstyle') ? 'soft style' : ($('#editStyle').value || 'heavy cotton');
       const qty   = Math.max(0, Number($('#editQty').value||0));
       const notes = document.getElementById('editNotes').value.trim();
       upsertItem({...it, color, size, brand, style, qty, notes});
@@ -536,15 +552,14 @@
       const size  = document.getElementById('newSize').value;
       const brandSel = document.getElementById('newBrand').value;
       const brand = brandSel === '(unbranded)' ? '' : (brandSel || 'Gildan');
-      const style = document.getElementById('newStyle').value;
+      const style = (document.getElementById('newStyle').value || 'heavy cotton');
       const qty   = Number(document.getElementById('newQty').value||0);
 
       const key = x=> `${x.color}|${x.size}|${x.brand}|${x.style}`;
-      const existing = state.items.find(x=> key(x)===`${color}|${size}|${brand}|${style}`);
+      const existing = state.items.find(x=> !x.separator && key(x)===`${color}|${size}|${brand}|${style}`);
       if (existing){ upsertItem({...existing, qty}); }
-      else upsertItem({id:uid(), color, size, brand, style, qty});
+      else upsertItem({id:uid(), color, size, brand, style, qty, ord: nextOrd()});
 
-      // Also sync lists
       addToList('colors', color);
       addToList('sizes',  size);
       if(brand.trim()) addToList('brands', brand);
@@ -556,45 +571,55 @@
 
     document.getElementById('addQuick').addEventListener('click', ()=>{
       if (!isAdmin) return alert('Admin only');
-      const def = {color: state.colors[0], size: state.sizes[0], brand: 'Gildan', style: state.styles[0], notes:'', qty:0};
+      const def = {color: state.colors[0]||'', size: state.sizes[0]||'', brand: 'Gildan', style: 'heavy cotton', notes:'', qty:0, ord: nextOrd()};
       upsertItem({id:uid(), ...def});
     });
 
-    document.getElementById('addColorBtn').addEventListener('click', ()=>{
+    document.getElementById('addSeparatorBtn').addEventListener('click', ()=>{
+      if (!isAdmin) return alert('Admin only');
+      const label = prompt('Optional label for this separator (e.g. "Darks", "Yellows"):', '');
+      const sep = { id: uid(), separator:true, label: label||'', qty:0, ord: nextOrd() };
+      db.ref('items/'+sep.id).set(sep);
+    });
+
+    document.getElementById('addColorBtn')?.addEventListener('click', ()=>{
       if (!isAdmin) return alert('Admin only');
       const v=document.getElementById('addColor').value.trim(); if(!v) return;
       addToList('colors',v); document.getElementById('addColor').value=''; saveLists();
     });
-    document.getElementById('addSizeBtn').addEventListener('click', ()=>{
+    document.getElementById('addSizeBtn')?.addEventListener('click', ()=>{
       if (!isAdmin) return alert('Admin only');
       const v=document.getElementById('addSize').value.trim(); if(!v) return;
       addToList('sizes',v); document.getElementById('addSize').value=''; saveLists();
     });
-    document.getElementById('addBrandBtn').addEventListener('click', ()=>{
+    document.getElementById('addBrandBtn')?.addEventListener('click', ()=>{
       if (!isAdmin) return alert('Admin only');
       const v=document.getElementById('addBrand').value.trim(); if(!v) return;
       addToList('brands',v); document.getElementById('addBrand').value=''; saveLists();
     });
-    document.getElementById('addStyleBtn').addEventListener('click', ()=>{
+    document.getElementById('addStyleBtn')?.addEventListener('click', ()=>{
       if (!isAdmin) return alert('Admin only');
       const v=document.getElementById('addStyle').value.trim(); if(!v) return;
-      addToList('styles',v); document.getElementById('addStyle').value=''; saveLists();
+      const val = v === 'softstyle' ? 'soft style' : v;
+      addToList('styles',val); document.getElementById('addStyle').value=''; saveLists();
     });
 
-    // ==== Helpers ====
-    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c])); }
-
-    // ==== Event delegation so ALL rows (incl first) can inc/dec/edit/delete ====
+    // ==== Event delegation for ALL actions (incl reorder) ====
     const tbodyEl = document.getElementById('tbody');
     tbodyEl.addEventListener('click', (e)=>{
       const btn = e.target.closest('button'); if(!btn) return;
-      if (!isAdmin && (btn.id?.startsWith('inc-') || btn.id?.startsWith('dec-') || btn.id?.startsWith('del-') || btn.id?.startsWith('edit-'))) {
+
+      if (!isAdmin && /^(inc-|dec-|del-|edit-|up-|down-|editsep-)/.test(btn.id)) {
         alert('Admin only'); return;
       }
+
       if (btn.id?.startsWith('inc-')) { adjQty(btn.id.slice(4), +1); }
       else if (btn.id?.startsWith('dec-')) { adjQty(btn.id.slice(4), -1); }
-      else if (btn.id?.startsWith('del-')) { removeItem(btn.id.slice(4)); }   // <— reliable remover
+      else if (btn.id?.startsWith('del-')) { removeItem(btn.id.slice(4)); }
+      else if (btn.id?.startsWith('editsep-')) { openEdit(btn.id.slice(8)); }
       else if (btn.id?.startsWith('edit-')) { openEdit(btn.id.slice(5)); }
+      else if (btn.id?.startsWith('up-')) { move(btn.id.slice(3), -1); }
+      else if (btn.id?.startsWith('down-')) { move(btn.id.slice(5), +1); }
     }, {passive:false});
 
     // ==== Initial paint ====
