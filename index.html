@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -71,6 +72,9 @@
     .right{ text-align:right }
     .hidden{display:none !important}
     .footer{color:var(--muted); font-size:12px; margin-top:4px}
+
+    /* small polish for number alignment */
+    td.right strong { font-variant-numeric: tabular-nums; }
   </style>
 </head>
 <body>
@@ -150,7 +154,7 @@
             <tr>
               <th class="sortable" data-key="color"><span>Colour</span></th>
               <th class="sortable" data-key="size"><span>Size</span></th>
-              <th class="sortable right" data-key="qty"><span>Qty</span></th><!-- moved here -->
+              <th class="sortable right" data-key="qty"><span>Qty</span></th>
               <th class="sortable" data-key="brand"><span>Brand</span></th>
               <th class="sortable" data-key="style"><span>Style</span></th>
               <th id="thNotes"><span>Notes</span></th>
@@ -238,7 +242,8 @@
         "Pink (Heliconia)","Orange","Metro Blue","Green (Irish)","Green (Military)","Maroon"
       ],
       styles: ["standard","softstyle","mid softstyle","heavy cotton","ultra cotton"],
-      brands: [],
+      // Start with Gildan as the sole seeded brand
+      brands: ["Gildan"],
       items: [] // {id,color,size,brand,style,notes,qty}
     };
 
@@ -251,7 +256,11 @@
       state.sizes  = v.sizes  || state.sizes;
       state.colors = v.colors || state.colors;
       state.styles = v.styles || state.styles;
-      state.brands = v.brands || state.brands;
+      // Ensure Gildan is present and first
+      const incomingBrands = v.brands || state.brands;
+      const uniq = Array.from(new Set(incomingBrands));
+      if (!uniq.includes("Gildan")) uniq.unshift("Gildan");
+      state.brands = uniq;
       refreshLists(); render();
     });
 
@@ -277,9 +286,8 @@
 
     $('#loginBtn').addEventListener('click', () => {
       if (isAdmin){ toggleAdmin(false); return; }
-      // Prefer dialog (prevents iOS autocapitalize issues)
       try { loginDlg.showModal(); loginPw.focus(); }
-      catch { // fallback to prompt if dialog unsupported
+      catch {
         const pw = prompt('Enter admin password');
         if (pw === ADMIN_PASSWORD){ toggleAdmin(true); }
         else if (pw !== null) alert('Wrong password');
@@ -326,6 +334,9 @@
       sel.innerHTML = (includeBlank?'<option value="">—</option>':'') + values.map(v=>`<option>${escapeHtml(v)}</option>`).join('');
     }
     function refreshLists(){
+      // Make sure "Gildan" is present and first in brands
+      if (!state.brands.includes("Gildan")) state.brands.unshift("Gildan");
+
       fillOptions($('#filterColor'), state.colors);
       fillOptions($('#filterSize'), state.sizes);
       fillOptions($('#filterBrand'), state.brands);
@@ -334,13 +345,21 @@
       // Admin add form (no blank)
       fillOptions($('#newColor'), state.colors, false);
       fillOptions($('#newSize'), state.sizes, false);
-      $('#newBrand').innerHTML = ('(unbranded)'+(state.brands.length?','+state.brands.join(','):'')).split(',').map(v=>`<option>${escapeHtml(v)}</option>`).join('');
+      $('#newBrand').innerHTML = ('(unbranded)'+(state.brands.length?','+state.brands.join(','):''))
+        .split(',')
+        .map(v=>`<option>${escapeHtml(v)}</option>`)
+        .join('');
+      // Default to Gildan for new items
+      if ([...$('#newBrand').options].some(o=>o.value==='Gildan')) $('#newBrand').value = 'Gildan';
       fillOptions($('#newStyle'), state.styles, false);
 
       // Edit selects
       fillOptions($('#editColor'), state.colors, false);
       fillOptions($('#editSize'), state.sizes, false);
-      $('#editBrand').innerHTML = ('(unbranded)'+(state.brands.length?','+state.brands.join(','):'')).split(',').map(v=>`<option>${escapeHtml(v)}</option>`).join('');
+      $('#editBrand').innerHTML = ('(unbranded)'+(state.brands.length?','+state.brands.join(','):''))
+        .split(',')
+        .map(v=>`<option>${escapeHtml(v)}</option>`)
+        .join('');
       fillOptions($('#editStyle'), state.styles, false);
     }
 
@@ -391,14 +410,6 @@
       $('#totalItems').textContent = totalItems;
       $('#totalQty').textContent = totalQty;
 
-      // Bind action buttons
-      rows.forEach(it=>{
-        document.getElementById('inc-'+it.id)?.addEventListener('click',()=>adjQty(it.id, +1));
-        document.getElementById('dec-'+it.id)?.addEventListener('click',()=>adjQty(it.id, -1));
-        document.getElementById('del-'+it.id)?.addEventListener('click',()=>removeItem(it.id));
-        document.getElementById('edit-'+it.id)?.addEventListener('click',()=>openEdit(it.id));
-      });
-
       // Sync actions col visibility with admin state
       $$('#tbody td.col-actions').forEach(el=> el.style.display = isAdmin ? '' : 'none');
     }
@@ -438,7 +449,9 @@
     }
     function upsertItem(obj){
       const id = obj.id || uid();
-      const clean = {...obj, id, qty: Number(obj.qty||0), notes: (obj.notes||'')};
+      // default brand to Gildan if empty/undefined
+      const brand = (obj.brand ?? '').toString().trim() || 'Gildan';
+      const clean = {...obj, id, brand, qty: Number(obj.qty||0), notes: (obj.notes||'')};
       return db.ref('items/'+id).set(clean);
     }
     function deleteItem(id){ return db.ref('items/'+id).remove(); }
@@ -477,15 +490,16 @@
       const it = state.items.find(x=>x.id===editingId); if(!it) return;
       const color = $('#editColor').value;
       const size  = $('#editSize').value;
-      const brand = $('#editBrand').value==='(unbranded)'? '' : $('#editBrand').value;
+      const brandSel = $('#editBrand').value;
+      const brand = brandSel==='(unbranded)'? '' : brandSel || 'Gildan';
       const style = $('#editStyle').value;
       const qty   = Math.max(0, Number($('#editQty').value||0));
       const notes = document.getElementById('editNotes').value.trim();
       upsertItem({...it, color, size, brand, style, qty, notes});
       addToList('colors', color);
       addToList('sizes',  size);
-      if (brand.trim()) addToList('brands', brand);
       addToList('styles', style);
+      if (brand.trim()) addToList('brands', brand);
       saveLists();
       editingId = null; dlg.close();
     });
@@ -504,7 +518,8 @@
       if (!isAdmin) return alert('Admin only');
       const color = document.getElementById('newColor').value;
       const size  = document.getElementById('newSize').value;
-      const brand = document.getElementById('newBrand').value === '(unbranded)' ? '' : document.getElementById('newBrand').value;
+      const brandSel = document.getElementById('newBrand').value;
+      const brand = brandSel === '(unbranded)' ? '' : (brandSel || 'Gildan');
       const style = document.getElementById('newStyle').value;
       const qty   = Number(document.getElementById('newQty').value||0);
 
@@ -525,7 +540,7 @@
 
     document.getElementById('addQuick').addEventListener('click', ()=>{
       if (!isAdmin) return alert('Admin only');
-      const def = {color: state.colors[0], size: state.sizes[0], brand: '', style: state.styles[0], notes:'', qty:0};
+      const def = {color: state.colors[0], size: state.sizes[0], brand: 'Gildan', style: state.styles[0], notes:'', qty:0};
       upsertItem({id:uid(), ...def});
     });
 
@@ -550,7 +565,7 @@
       addToList('styles',v); document.getElementById('addStyle').value=''; saveLists();
     });
 
-    // Filters
+    // ==== Filters (simple) ====
     ['search','filterColor','filterSize','filterBrand','filterStyle','toggleNotes'].forEach(id=>{
       document.getElementById(id).addEventListener('input', render, {passive:true});
       document.getElementById(id).addEventListener('change', render, {passive:true});
@@ -558,6 +573,22 @@
 
     // ==== Helpers ====
     function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c])); }
+
+    // ==== Event delegation so ALL rows (incl first) can inc/dec/edit/delete ====
+    const tbodyEl = document.getElementById('tbody');
+    tbodyEl.addEventListener('click', (e)=>{
+      const btn = e.target.closest('button'); if(!btn) return;
+      if (!isAdmin && (btn.id?.startsWith('inc-') || btn.id?.startsWith('dec-') || btn.id?.startsWith('del-') || btn.id?.startsWith('edit-'))) {
+        alert('Admin only'); return;
+      }
+      if (btn.id?.startsWith('inc-')) { adjQty(btn.id.slice(4), +1); }
+      else if (btn.id?.startsWith('dec-')) { adjQty(btn.id.slice(4), -1); }
+      else if (btn.id?.startsWith('del-')) {
+        const id = btn.id.slice(4);
+        if (confirm('Delete this row?')) deleteItem(id);
+      }
+      else if (btn.id?.startsWith('edit-')) { openEdit(btn.id.slice(5)); }
+    }, {passive:false});
 
     // ==== Initial paint ====
     refreshLists();
