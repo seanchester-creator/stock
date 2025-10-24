@@ -311,6 +311,8 @@
       if (thActions) thActions.style.display = on ? '' : 'none';
       $$('#tbody td.col-actions').forEach(td=> td.style.display = on ? '' : 'none');
 
+      // Ensure the admin selects are populated when entering admin mode
+      if (on) refreshLists();
       render();
     }
 
@@ -528,18 +530,37 @@
     }
 
     // Admin actions
-    document.getElementById('addItemBtn').addEventListener('click', ()=>{
-      if (!isAdmin) return alert('Admin only');
-      const color = document.getElementById('newColor').value;
-      const size  = document.getElementById('newSize').value;
-      const brandSel = document.getElementById('newBrand').value;
-      const brand = brandSel === '(unbranded)' ? '' : (brandSel || 'Gildan');
-      const style = document.getElementById('newStyle').value;
-      const qty   = Number(document.getElementById('newQty').value||0);
+    document.getElementById('addItemBtn').addEventListener('click', async ()=>{
+      try{
+        if (!isAdmin) { alert('Admin only'); return; }
+        if (!document.getElementById('newColor').options.length) refreshLists();
 
-      const key = x=> `${x.color}|${x.size}|${x.brand}|${x.style}`;
-      const existing = state.items.find(x=> key(x)===`${color}|${size}|${brand}|${style}`);
-      if (existing){ upsertItem({...existing, qty}); }
+        const color = document.getElementById('newColor').value;
+        const size  = document.getElementById('newSize').value;
+        const brandSel = document.getElementById('newBrand').value;
+        const brand = brandSel === '(unbranded)' ? '' : (brandSel || 'Gildan');
+        const style = document.getElementById('newStyle').value;
+        const qty   = Number(document.getElementById('newQty').value||0);
+
+        if (!color || !size || !style) { alert('Please choose colour, size and style.'); return; }
+
+        const key = x=> `${x.color}|${x.size}|${x.brand}|${x.style}`;
+        const existing = state.items.find(x=> key(x)===`${color}|${size}|${brand}|${style}`);
+        if (existing){ await upsertItem({...existing, qty}); }
+        else await upsertItem({id:uid(), color, size, brand, style, qty});
+
+        addToList('colors', color);
+        addToList('sizes',  size);
+        if(brand.trim()) addToList('brands', brand);
+        addToList('styles', style);
+        await saveLists();
+
+        document.getElementById('newQty').value = 0;
+      }catch(err){
+        console.error('Add/Update failed', err);
+        alert('Add/Update failed: ' + (err?.message || err));
+      }
+    }); }
       else upsertItem({id:uid(), color, size, brand, style, qty});
 
       addToList('colors', color);
