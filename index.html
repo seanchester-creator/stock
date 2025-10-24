@@ -216,15 +216,24 @@
 
   <script>
     // ===== Firebase config — replace with your project's values =====
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
+   // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBwXtynA-NVN6xkEFS4n5C_AXwMxDUtlJE",
+  authDomain: "tshirts-sonnys.firebaseapp.com",
+  databaseURL: "https://tshirts-sonnys-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tshirts-sonnys",
+  storageBucket: "tshirts-sonnys.firebasestorage.app",
+  messagingSenderId: "106241030509",
+  appId: "1:106241030509:web:b546fa7eeae769f6694264"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
     // ===============================================================
 
     // Initialize Firebase
