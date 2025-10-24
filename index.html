@@ -2,66 +2,70 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#e5f0ff" />
   <title>sonny's stock inventory</title>
   <style>
     :root{
-      --bg:#f8fafc;
+      --bg:#f7fafc;
       --panel:#ffffff;
       --line:#e5e7eb;
       --text:#0b1220;
       --muted:#64748b;
       --chip:#f2f4f7;
       --chipText:#1f2937;
-      --accent:#E1A100; /* Indian yellow */
-      --accent-weak:#ffefc2;
+      /* Light blue accent (replaces yellow) */
+      --accent:#3b82f6;           /* blue-500 */
+      --accent-weak:#e5f0ff;      /* pale blue */
       --good:#0f8b3e;
       --danger:#b42318;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; background:var(--bg); color:var(--text)}
-    header{position:sticky; top:0; z-index:5; backdrop-filter:saturate(1.1) blur(6px); background:rgba(248,250,252,0.8); border-bottom:1px solid var(--line)}
+    body{margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; background:var(--bg); color:var(--text); -webkit-text-size-adjust:100%; -webkit-tap-highlight-color: rgba(0,0,0,0)}
+    header{position:sticky; top:0; z-index:5; backdrop-filter:saturate(1.1) blur(10px); background:rgba(247,250,252,0.9); border-bottom:1px solid var(--line)}
     .wrap{max-width:1100px; margin:0 auto; padding:16px}
     h1{margin:0; font-size:24px; letter-spacing:.2px}
     .sub{color:var(--muted); font-size:12px}
-    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .row{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
     .spacer{flex:1}
 
     .logo{display:flex; align-items:center; gap:12px}
     .logo img{height:60px; width:auto}
 
-    .btn{appearance:none; border:1px solid var(--line); background:#fff; color:#111827; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600}
+    .btn{appearance:none; border:1px solid var(--line); background:#fff; color:#111827; padding:12px 14px; border-radius:12px; cursor:pointer; font-weight:600; min-height:44px}
     .btn:hover{border-color:var(--accent)}
-    .btn.primary{background:var(--accent); color:#111; border-color:#d69b00}
+    .btn.primary{background:var(--accent); color:#fff; border-color:#2f6fe0}
     .btn.good{border-color:#a7f3d0; background:#ecfdf5; color:#064e3b}
     .btn.danger{border-color:#fecaca; background:#fef2f2; color:#b91c1c}
     .btn.ghost{background:transparent}
 
     .toolbar{margin-top:8px; display:flex; gap:10px; flex-wrap:wrap}
-    input, select, textarea{background:#fff; color:var(--text); border:1px solid var(--line); padding:8px 10px; border-radius:10px; outline:none}
+    input, select, textarea{background:#fff; color:var(--text); border:1px solid var(--line); padding:10px 12px; border-radius:12px; outline:none; min-height:44px; font-size:16px}
     input:focus, select:focus, textarea:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-weak)}
 
-    main{max-width:1100px; margin:20px auto; padding:0 16px 60px}
+    main{max-width:1100px; margin:20px auto; padding:0 16px 80px}
 
     .panel{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px}
     .panel h3{margin:4px 0 10px; font-size:16px}
 
     table{width:100%; border-collapse:separate; border-spacing:0}
     thead th{position:sticky; top:0; background:var(--panel); z-index:2}
-    th, td{ text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:middle}
-    tr:hover td{ background:#fafafa }
+    th, td{ text-align:left; padding:12px; border-bottom:1px solid var(--line); vertical-align:middle}
+    tr:hover td{ background:#f9fafb }
     th.sortable{cursor:pointer}
     th.sortable span{opacity:.7}
     th.sortable.active span{opacity:1; color:#111}
 
-    .qty{display:inline-flex; align-items:center; gap:6px}
-    .iconbtn{width:28px; height:28px; display:inline-grid; place-items:center; border-radius:8px; border:1px solid var(--line); background:#fff; cursor:pointer}
+    .qty{display:inline-flex; align-items:center; gap:8px}
+    .iconbtn{width:40px; height:40px; display:inline-grid; place-items:center; border-radius:10px; border:1px solid var(--line); background:#fff; cursor:pointer}
     .iconbtn:hover{border-color:var(--accent)}
 
     .grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:12px}
     .muted{color:var(--muted)}
-    .badge{display:inline-block; padding:4px 8px; border-radius:999px; border:1px solid var(--line); background:var(--chip); color:var(--chipText); font-size:12px}
+    .badge{display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:var(--chip); color:var(--chipText); font-size:12px}
 
     .right{ text-align:right }
     .note{font-size:12px; color:var(--muted)}
@@ -73,10 +77,10 @@
     /* Edit dialog */
     dialog{border:1px solid var(--line); border-radius:16px; padding:0; max-width:720px; width:96vw}
     dialog::backdrop{background:rgba(0,0,0,.35)}
-    .dlg-head{display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); padding:12px 14px; background:linear-gradient(180deg,#fff,#fff6d9)}
+    .dlg-head{display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); padding:12px 14px; background:linear-gradient(180deg,#fff,#eef5ff)}
     .dlg-body{padding:14px}
     .dlg-grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px}
-    .dlg-foot{display:flex; justify-content:flex-end; gap:8px; border-top:1px solid var(--line); padding:12px 14px; background:#fafafa}
+    .dlg-foot{display:flex; justify-content:flex-end; gap:8px; border-top:1px solid var(--line); padding:12px 14px; background:#f6f8fb}
     @media (max-width:640px){ .dlg-grid{grid-template-columns:1fr} }
   </style>
 </head>
@@ -118,7 +122,7 @@
             <select id="newSize"></select>
             <select id="newBrand"></select>
             <select id="newStyle"></select>
-            <input id="newQty" type="number" min="0" value="0" style="width:120px"/>
+            <input id="newQty" type="number" inputmode="numeric" min="0" value="0" style="width:120px"/>
           </div>
           <div class="row" style="margin-top:6px; gap:6px">
             <input id="newMeasurements" placeholder="Measurements / notes (optional)" style="flex:1"/>
@@ -147,11 +151,9 @@
         <div>
           <label class="muted">Data</label>
           <div class="row" style="margin-top:6px; gap:6px; flex-wrap:wrap">
-            <button class="btn" id="exportBtn">Export JSON</button>
-            <label class="btn ghost" for="importFile">Import JSON</label>
-            <input id="importFile" type="file" accept="application/json" class="hidden" />
+            <!-- Export/Import removed as requested -->
+            <span class="note">Cloud mode: data syncs to Firebase in real time. Admin password protects UI; Firebase rules protect writes.</span>
           </div>
-          <div class="note">Cloud mode: data syncs to Firebase Realtime Database. (UI admin password only; for strong security, enable Firebase Auth & rules.)</div>
         </div>
       </div>
       <div class="footer">Logged in as <strong>admin</strong>. <button class="btn ghost" id="logoutBtn">Sign out</button></div>
@@ -160,11 +162,11 @@
     <section class="panel" style="margin-top:14px">
       <div class="row" style="align-items:flex-end">
         <h3 style="margin-right:8px">Current stock</h3>
-        <span class="note">Click a column to sort • Use +/− to adjust quantities • Click ✏️ to edit inline</span>
+        <span class="note">Tap a column to sort • Use +/− to adjust quantities • Tap ✏️ to edit</span>
         <div class="spacer"></div>
         <button class="btn" id="addQuick" title="Add a new blank row with defaults (admin)">New row</button>
       </div>
-      <div style="overflow:auto; border-radius:12px; border:1px solid var(--line); margin-top:10px">
+      <div style="overflow:auto; border-radius:12px; border:1px solid var(--line); margin-top:10px; -webkit-overflow-scrolling:touch">
         <table id="table">
           <thead>
             <tr>
@@ -196,7 +198,7 @@
           <label>Size<br><select id="editSize"></select></label>
           <label>Brand<br><select id="editBrand"></select></label>
           <label>Style<br><select id="editStyle"></select></label>
-          <label>Quantity<br><input id="editQty" type="number" min="0" /></label>
+          <label>Quantity<br><input id="editQty" type="number" inputmode="numeric" min="0" /></label>
           <label>Measurements / notes<br><input id="editMeasurements" /></label>
         </div>
       </div>
@@ -237,7 +239,7 @@
     const state = {
       sizes: ["Small","Medium","Large","XL","2XL","3XL","4XL"],
       colors: [
-        "Black","White","Yellow (Daisy)","Yellow (Butter)","Navy","Royal Blue","Brown","Red","Cherry Red","Sports Grey","Purple","Pink","Pink (Heliconia)","Orange","Metro Blue","Green (Irish)","Green (Military)","Maroon"
+        "Black","White","Yellow (Daisy)","Yellow (Butter)","Navy","Royal Blue","Brown","Light Brown","Red","Cherry Red","Sports Grey","Purple","Pink","Pink (Heliconia)","Orange","Metro Blue","Green (Irish)","Green (Military)","Maroon","Mono"
       ],
       styles: ["standard","softstyle","mid softstyle","heavy cotton","ultra cotton"],
       brands: [],
@@ -399,6 +401,9 @@
     }
 
     // ===== CRUD helpers (write to Firebase) =====
+    const listsRef = db.ref('lists');
+    const itemsRef = db.ref('items');
+
     function saveLists(){
       return listsRef.set({
         sizes: state.sizes,
@@ -503,41 +508,10 @@
     $('#addBrandBtn').addEventListener('click', ()=>{ if (!isAdmin) return alert('Admin only'); const v=$('#addBrand').value.trim(); if(!v) return; addToList('brands',v); $('#addBrand').value=''; saveLists(); });
     $('#addStyleBtn').addEventListener('click', ()=>{ if (!isAdmin) return alert('Admin only'); const v=$('#addStyle').value.trim(); if(!v) return; addToList('styles',v); $('#addStyle').value=''; saveLists(); });
 
-    $('#exportBtn').addEventListener('click', ()=>{
-      const payload = {sizes:state.sizes, colors:state.colors, styles:state.styles, brands:state.brands, items:state.items};
-      const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'tshirt-inventory.json';
-      a.click();
-      URL.revokeObjectURL(a.href);
-    });
-
-    $('#importFile').addEventListener('change', (e)=>{
-      const file = e.target.files[0]; if (!file) return;
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try{
-          const data = JSON.parse(reader.result);
-          ['sizes','colors','styles','brands'].forEach(list=>{ (data[list]||[]).forEach(v=> addToList(list, v)); });
-          await saveLists();
-          const key = x=> `${x.color}|${x.size}|${x.brand||''}|${x.style}`;
-          const currentByKey = new Map(state.items.map(x=>[key(x), x]));
-          for (const n of (data.items||[])){
-            const ex = currentByKey.get(key(n));
-            if (ex) await upsertItem({...ex, ...n}); else await upsertItem({...n, id: uid()});
-          }
-          alert('Import complete');
-        }catch(err){ console.error(err); alert('Invalid JSON'); }
-        e.target.value='';
-      };
-      reader.readAsText(file);
-    });
-
     // Filters
     ['search','filterColor','filterSize','filterBrand','filterStyle'].forEach(id=>{
-      document.getElementById(id).addEventListener('input', render);
-      document.getElementById(id).addEventListener('change', render);
+      document.getElementById(id).addEventListener('input', render, {passive:true});
+      document.getElementById(id).addEventListener('change', render, {passive:true});
     });
 
     // ==== Helpers ====
