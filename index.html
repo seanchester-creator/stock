@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,8 +17,6 @@
       --line:#e5e7eb;
       --text:#0b1220;
       --muted:#6b7280;
-      --chip:#f3f4f6;
-      --chipText:#111827;
       --accent:#111827;
       --accent-weak:#e5e7eb;
     }
@@ -23,48 +24,32 @@
     html,body{height:100%}
     body{
       margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica Neue,Arial;
       background:var(--bg); color:var(--text);
       -webkit-text-size-adjust:100%;
-      -webkit-tap-highlight-color: rgba(0,0,0,0)
+      -webkit-tap-highlight-color:transparent;
     }
-    header{position:sticky; top:0; z-index:5; backdrop-filter:saturate(1.05) blur(10px); background:rgba(246,247,249,0.9); border-bottom:1px solid var(--line)}
-    .wrap{max-width:1100px; margin:0 auto; padding:16px}
-    h1{margin:0; font-size:24px; letter-spacing:.2px}
-    .row{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
+    header{position:sticky;top:0;z-index:5;backdrop-filter:saturate(1.05) blur(10px);background:rgba(246,247,249,0.9);border-bottom:1px solid var(--line)}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    h1{margin:0;font-size:24px;letter-spacing:.2px}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
     .spacer{flex:1}
-    .logo{display:flex; align-items:center; gap:12px}
-    .logo img{height:60px; width:auto}
-    .btn{appearance:none; border:1px solid var(--line); background:#fff; color:#111827; padding:12px 14px; border-radius:12px; cursor:pointer; font-weight:600; min-height:44px}
-    .btn:hover{border-color:var(--accent)}
-    .btn.primary{background:var(--accent); color:#fff; border-color:#111827}
-    .btn.ghost{background:transparent}
-    .toolbar{margin-top:8px; display:flex; gap:10px; flex-wrap:wrap}
-    input, select{
-      background:#fff; color:#0b1220; border:1px solid var(--line);
-      padding:10px 12px; border-radius:12px; outline:none; min-height:44px; font-size:16px
-    }
-    input:focus, select:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-weak)}
-    main{max-width:1100px; margin:20px auto; padding:0 16px 80px}
-    .panel{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px}
-    .panel h3{margin:4px 0 10px; font-size:16px}
-    table{width:100%; border-collapse:separate; border-spacing:0}
-    thead th{position:sticky; top:0; background:var(--panel); z-index:2}
-    th, td{ text-align:left; padding:12px; border-bottom:1px solid var(--line); vertical-align:middle}
-    tr:hover td{ background:#f9fafb }
+    .logo img{height:60px;width:auto}
+    .btn{appearance:none;border:1px solid var(--line);background:#fff;color:#111827;padding:12px 14px;border-radius:12px;cursor:pointer;font-weight:600;min-height:44px}
+    .btn.primary{background:var(--accent);color:#fff;border-color:#111827}
+    .toolbar{margin-top:8px;display:flex;gap:10px;flex-wrap:wrap}
+    input,select{background:#fff;color:#0b1220;border:1px solid var(--line);padding:10px 12px;border-radius:12px;outline:none;min-height:44px;font-size:16px}
+    main{max-width:1100px;margin:20px auto;padding:0 16px 80px}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px}
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line)}
+    tr:hover td{background:#f9fafb}
     th.sortable{cursor:pointer}
-    th.sortable span{opacity:.7}
-    th.sortable.active span{opacity:1; color:#111}
-    .qty{display:inline-flex; align-items:center; gap:8px}
-    .iconbtn{width:40px; height:40px; display:inline-grid; place-items:center; border-radius:10px; border:1px solid var(--line); background:#fff; cursor:pointer}
-    .iconbtn:hover{border-color:var(--accent)}
-    .grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:12px}
+    .qty{display:inline-flex;align-items:center;gap:8px}
+    .iconbtn{width:40px;height:40px;display:inline-grid;place-items:center;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer}
     .muted{color:var(--muted)}
-    .right{ text-align:right }
-    .hidden{display:none !important}
-    .footer{color:var(--muted); font-size:12px; margin-top:4px}
-    td.right strong { font-variant-numeric: tabular-nums; }
-    tr.deleting { opacity: 0.4; transition: opacity 0.3s ease; }
+    .right{text-align:right}
+    tr.deleting{opacity:.4;transition:opacity .3s ease}
   </style>
 </head>
 <body>
@@ -73,7 +58,7 @@
       <div class="row">
         <div class="logo">
           <img alt="Sonny logo" src="https://sonny.org.uk/cdn/shop/files/logo.png?v=1723800320&width=300" />
-          <div><h1>sonny's stock inventory</h1></div>
+          <h1>sonny's stock inventory</h1>
         </div>
         <div class="spacer"></div>
         <button id="loginBtn" class="btn" title="Admin area">🔐 Admin</button>
@@ -96,49 +81,23 @@
   <main>
     <section class="panel" id="adminPanel" aria-hidden="true" style="display:none">
       <h3>Admin controls</h3>
-      <div class="grid">
-        <div>
-          <label class="muted">Add or update inventory</label>
-          <div class="row" style="margin-top:6px; gap:6px">
-            <select id="newColor"></select>
-            <select id="newSize"></select>
-            <select id="newBrand"></select>
-            <select id="newStyle"></select>
-            <input id="newQty" type="number" inputmode="numeric" min="0" value="0" style="width:120px"/>
-          </div>
-          <div class="row" style="margin-top:6px; gap:10px; align-items:center">
-            <button class="btn primary" id="addItemBtn">➕ Add/Update</button>
-          </div>
-        </div>
-        <div>
-          <label class="muted">Manage lists</label>
-          <div class="row" style="margin-top:6px; gap:6px">
-            <input id="addColor" placeholder="Add colour"/>
-            <button class="btn" id="addColorBtn">Add</button>
-          </div>
-          <div class="row" style="margin-top:6px; gap:6px">
-            <input id="addSize" placeholder="Add size"/>
-            <button class="btn" id="addSizeBtn">Add</button>
-          </div>
-          <div class="row" style="margin-top:6px; gap:6px">
-            <input id="addBrand" placeholder="Add brand"/>
-            <button class="btn" id="addBrandBtn">Add</button>
-          </div>
-          <div class="row" style="margin-top:6px; gap:6px">
-            <input id="addStyle" placeholder="Add style"/>
-            <button class="btn" id="addStyleBtn">Add</button>
-          </div>
-        </div>
+      <div class="row" style="gap:6px;margin-bottom:8px">
+        <select id="newColor"></select>
+        <select id="newSize"></select>
+        <select id="newBrand"></select>
+        <select id="newStyle"></select>
+        <input id="newQty" type="number" min="0" value="0" style="width:120px"/>
+        <button class="btn primary" id="addItemBtn">➕ Add/Update</button>
       </div>
     </section>
 
     <section class="panel" style="margin-top:14px">
       <div class="row" style="align-items:flex-end">
-        <h3 style="margin-right:8px">Current stock</h3>
+        <h3>Current stock</h3>
         <div class="spacer"></div>
-        <button class="btn" id="addQuick" title="Add a new blank row with defaults (admin)" style="display:none">New row</button>
+        <button class="btn" id="addQuick" style="display:none">New row</button>
       </div>
-      <div style="overflow:auto; border-radius:12px; border:1px solid var(--line); margin-top:10px; -webkit-overflow-scrolling:touch">
+      <div style="overflow:auto;border-radius:12px;border:1px solid var(--line);margin-top:10px">
         <table id="table">
           <thead>
             <tr>
@@ -157,7 +116,26 @@
     </section>
   </main>
 
-  <!-- Firebase SDKs -->
+  <!-- Login dialog -->
+  <dialog id="loginDialog">
+    <form method="dialog" id="loginForm">
+      <div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding:12px 14px;background:#f7f7f8">
+        <strong>Admin login</strong>
+        <button class="iconbtn" value="cancel" title="Close">✖</button>
+      </div>
+      <div style="padding:14px">
+        <label>Password<br>
+          <input id="loginPassword" type="password" autocomplete="current-password"
+                 autocapitalize="none" autocorrect="off" inputmode="text" placeholder="••••••" />
+        </label>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--line);padding:12px 14px;background:#f6f8fb">
+        <button class="btn" value="cancel">Cancel</button>
+        <button class="btn primary" id="loginSubmit" value="default">Log in</button>
+      </div>
+    </form>
+  </dialog>
+
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -172,50 +150,121 @@
       messagingSenderId: "106241030509",
       appId: "1:106241030509:web:b546fa7eeae769f6694264"
     };
-
     firebase.initializeApp(firebaseConfig);
     firebase.auth().signInAnonymously().catch(err => console.error('Auth error', err));
     const db = firebase.database();
 
-    const state = { sizes:[], colors:[], styles:[], brands:["Gildan"], items:[] };
-
+    const state = {sizes:[],colors:[],styles:[],brands:["Gildan"],items:[]};
     const listsRef = db.ref('lists');
     const itemsRef = db.ref('items');
 
-    listsRef.on('value', snap => {
-      const v = snap.val() || {};
-      state.sizes = v.sizes || [];
-      state.colors = v.colors || [];
-      state.styles = v.styles || [];
-      state.brands = v.brands || ["Gildan"];
-      refreshLists(); render();
+    listsRef.on('value', snap=>{
+      const v=snap.val()||{};
+      state.sizes=v.sizes||[];state.colors=v.colors||[];
+      state.styles=v.styles||[];state.brands=v.brands||["Gildan"];
+      refreshLists();render();
     });
 
-    // ✅ fixed listener: ensure first record gets an id
-    itemsRef.on('value', snap => {
-      const obj = snap.val() || {};
-      state.items = Object.entries(obj).map(([key, it]) => ({ ...it, id: it?.id || key }));
+    // ✅ fixed listener ensures IDs exist
+    itemsRef.on('value', snap=>{
+      const obj=snap.val()||{};
+      state.items=Object.entries(obj).map(([k,it])=>({...it,id:it?.id||k}));
       render();
     });
 
-    // ✅ one-time backfill
+    // ✅ one-time backfill for missing ids
     (async function backfillIdsOnce(){
-      const snap = await itemsRef.get();
-      const obj = snap.val() || {};
-      const updates = {};
-      for (const [key,it] of Object.entries(obj)) {
-        if (!it || it.id) continue;
-        updates[`items/${key}/id`] = key;
+      const snap=await itemsRef.get();
+      const obj=snap.val()||{};
+      const updates={};
+      for(const [k,it] of Object.entries(obj)){
+        if(!it||it.id)continue;
+        updates[`items/${k}/id`]=k;
       }
-      if (Object.keys(updates).length){
+      if(Object.keys(updates).length){
         await db.ref().update(updates);
-        console.log('Backfilled missing ids:', Object.keys(updates).length);
+        console.log('Backfilled item ids:',Object.keys(updates).length);
       }
     })();
 
-    /* ... keep your existing JS below (render, admin, CRUD, etc.) ... */
+    // ==== Admin login (working original) ====
+    const ADMIN_PASSWORD='sonny';
+    let isAdmin=sessionStorage.getItem('tee.admin')==='1';
+    toggleAdminUI(isAdmin);
+    const loginDlg=document.getElementById('loginDialog');
+    const loginPw=document.getElementById('loginPassword');
+
+    document.getElementById('loginBtn').addEventListener('click',()=>{
+      if(isAdmin){toggleAdmin(false);return;}
+      try{loginDlg.showModal();loginPw.focus();}
+      catch{
+        const pw=prompt('Enter admin password');
+        if(pw===ADMIN_PASSWORD){toggleAdmin(true);}
+        else if(pw!==null)alert('Wrong password');
+      }
+    });
+
+    document.getElementById('loginForm').addEventListener('submit',e=>{
+      e.preventDefault();
+      const pw=loginPw.value||'';
+      if(pw===ADMIN_PASSWORD){loginPw.value='';loginDlg.close();toggleAdmin(true);}
+      else alert('Wrong password');
+    });
+
+    document.getElementById('loginSubmit').addEventListener('click',e=>{
+      e.preventDefault();
+      document.getElementById('loginForm').dispatchEvent(new Event('submit',{cancelable:true}));
+    });
+
+    function toggleAdmin(on){
+      isAdmin=!!on;
+      sessionStorage.setItem('tee.admin',on?'1':'0');
+      toggleAdminUI(isAdmin);
+    }
+
+    function toggleAdminUI(on){
+      document.getElementById('adminPanel').style.display=on?'':'none';
+      document.getElementById('loginBtn').textContent=on?'🚪 Sign out':'🔐 Admin';
+      document.getElementById('addQuick').style.display=on?'':'none';
+      const th=document.querySelector('.col-actions-header');
+      if(th)th.style.display=on?'':'none';
+      document.querySelectorAll('#tbody td.col-actions').forEach(td=>td.style.display=on?'':'none');
+      render();
+    }
+
+    // ==== Basic rendering logic (unchanged) ====
+    const $=sel=>document.querySelector(sel);
+    const $$=sel=>Array.from(document.querySelectorAll(sel));
+
+    function refreshLists(){
+      fillOptions($('#filterColor'),state.colors);
+      fillOptions($('#filterSize'),state.sizes);
+      fillOptions($('#filterBrand'),state.brands);
+      fillOptions($('#filterStyle'),state.styles);
+      fillOptions($('#newColor'),state.colors,false);
+      fillOptions($('#newSize'),state.sizes,false);
+      fillOptions($('#newBrand'),state.brands,false);
+      fillOptions($('#newStyle'),state.styles,false);
+    }
+    function fillOptions(sel,values,blank=true){
+      sel.innerHTML=(blank?'<option value="">—</option>':'')+values.map(v=>`<option>${v}</option>`).join('');
+    }
+
+    function render(){
+      const tbody=$('#tbody');
+      tbody.innerHTML=state.items.map(it=>`<tr data-id="${it.id}">
+        <td>${it.color}</td><td>${it.size}</td>
+        <td class="right"><strong>${it.qty}</strong></td>
+        <td>${it.brand||'(unbranded)'}</td><td>${it.style}</td>
+        <td>${it.notes||''}</td>
+        <td class="right col-actions" style="display:${isAdmin?'':'none'}">
+          <button id="edit-${it.id}" class="iconbtn">✏️</button>
+          <button id="del-${it.id}" class="iconbtn">🗑️</button>
+        </td>
+      </tr>`).join('');
+    }
+
+    render();
   </script>
 </body>
 </html>
-
-
