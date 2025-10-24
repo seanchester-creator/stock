@@ -9,32 +9,76 @@
   <title>T-Shirt Stock Inventory</title>
   <style>
     :root{
-      --bg:#f8fafc;--card:#fff;--ink:#222;--muted:#6b7280;
+      --bg:#f8fafc;--card:#ffffff;--ink:#222;--muted:#6b7280;
       --brand:#2563eb;--brand-hover:#1d4ed8;--line:#e5e7eb;
     }
     *{box-sizing:border-box}
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,"Noto Sans",sans-serif;background:var(--bg);color:var(--ink);margin:0}
-    header{background:#e5f0ff;padding:1rem;text-align:center;font-weight:700;font-size:1.5rem}
-    #app{max-width:900px;margin:2rem auto;padding:1rem;background:var(--card);border-radius:1rem;box-shadow:0 2px 10px rgba(0,0,0,.05)}
-    .hidden{display:none!important}
-    .login-area{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem}
-    .muted{color:var(--muted)}
-    button{background:var(--brand);color:#fff;border:0;padding:.5rem .9rem;border-radius:8px;cursor:pointer;font-weight:600}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,"Noto Sans",sans-serif}
+    /* Header with logo back in */
+    header{
+      background:#e5f0ff;
+      padding:.75rem 1rem;
+      border-bottom:1px solid #dbeafe;
+    }
+    .header-inner{
+      max-width:1000px;margin:0 auto;display:flex;align-items:center;gap:.75rem;
+    }
+    .logo{
+      height:44px;width:auto;display:block;object-fit:contain;
+    }
+    .brand-title{
+      font-weight:800;font-size:1.35rem;letter-spacing:.2px;
+    }
+
+    /* Main card */
+    #app{
+      max-width:1000px;margin:1.25rem auto 2rem;padding:1rem;
+      background:var(--card);border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.05);
+    }
+
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.5rem;
+    }
+    .muted{color:var(--muted);font-size:.95rem}
+
+    button{
+      background:var(--brand);color:#fff;border:0;padding:.5rem .9rem;border-radius:8px;cursor:pointer;font-weight:600
+    }
     button:hover{background:var(--brand-hover)}
-    input,select{padding:.5rem;border-radius:6px;border:1px solid #ccc;min-width:0}
-    .form-row{display:flex;gap:.5rem;margin-bottom:.6rem;flex-wrap:wrap;align-items:center}
-    .inventory-table{width:100%;border-collapse:collapse;margin-top:1rem}
-    .inventory-table th,.inventory-table td{border-bottom:1px solid var(--line);text-align:left;padding:.6rem .4rem;vertical-align:top}
-    .note{font-size:.9rem;color:var(--muted)}
+    .hidden{display:none!important}
+
+    /* Simple stacked form like the original */
+    .form{
+      display:grid;gap:.6rem;margin:1rem 0;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    }
+    .field{display:grid;gap:.35rem}
+    label b{font-weight:700}
+    input,select{
+      padding:.5rem;border-radius:8px;border:1px solid #cfd3da;background:#fff
+    }
+    .full{grid-column:1/-1}
+
+    table{width:100%;border-collapse:collapse;margin-top:.5rem}
+    th,td{border-bottom:1px solid var(--line);padding:.6rem .4rem;text-align:left;vertical-align:top}
+    th{font-weight:700}
+    .note{color:var(--muted);font-size:.9rem;margin-top:.5rem}
   </style>
 </head>
 <body>
-  <header>T-Shirt Stock Inventory</header>
+  <!-- Header with logo restored -->
+  <header>
+    <div class="header-inner">
+      <img id="site-logo" class="logo" alt="Logo" />
+      <div class="brand-title">T-Shirt Stock Inventory</div>
+    </div>
+  </header>
+
   <div id="app">
-    <div class="login-area">
+    <div class="topbar">
       <div>
         <div id="user-status" class="muted">Not logged in</div>
-        <div class="note">View stock anytime. Add/Update requires login.</div>
+        <div class="muted">View stock anytime. Add/Update requires login.</div>
       </div>
       <div>
         <button id="login-btn">Login</button>
@@ -42,50 +86,54 @@
       </div>
     </div>
 
-    <!-- SIMPLE add/update form -->
+    <!-- Simple Add/Update (unchanged behavior) -->
     <form id="add-shirt-form" class="hidden" autocomplete="off">
-      <div class="form-row">
-        <label for="shirt-name"><strong>Name:</strong></label>
-        <input id="shirt-name" placeholder="T-shirt name" required />
-      </div>
-      <div class="form-row">
-        <label for="shirt-color"><strong>Color:</strong></label>
-        <select id="shirt-color">
-          <option>Black</option>
-          <option>White</option>
-          <option>Blue</option>
-          <option>Red</option>
-          <option>Green</option>
-          <option>Yellow</option>
-          <option>Grey</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <label for="shirt-qty"><strong>Quantity:</strong></label>
-        <input id="shirt-qty" type="number" min="0" value="0" />
-      </div>
-      <div class="form-row">
-        <label><input type="checkbox" id="show-measurements" /> Add measurements</label>
-      </div>
-      <div id="measurements-section" class="hidden" style="padding-left:.25rem;">
-        <div class="form-row">
-          <label for="measure-chest">Chest (in):</label>
-          <input id="measure-chest" type="number" step="0.1" />
+      <div class="form">
+        <div class="field">
+          <label for="shirt-name"><b>Name</b></label>
+          <input id="shirt-name" placeholder="T-shirt name" required />
         </div>
-        <div class="form-row">
-          <label for="measure-length">Length (in):</label>
-          <input id="measure-length" type="number" step="0.1" />
+        <div class="field">
+          <label for="shirt-color"><b>Color</b></label>
+          <select id="shirt-color">
+            <option>Black</option>
+            <option>White</option>
+            <option>Blue</option>
+            <option>Red</option>
+            <option>Green</option>
+            <option>Yellow</option>
+            <option>Grey</option>
+          </select>
         </div>
-      </div>
-      <div class="form-row">
-        <label for="shirt-notes"><strong>Notes:</strong></label>
-        <input id="shirt-notes" placeholder="Optional notes" />
+        <div class="field">
+          <label for="shirt-qty"><b>Quantity</b></label>
+          <input id="shirt-qty" type="number" min="0" value="0" />
+        </div>
+
+        <div class="field full">
+          <label><b><input type="checkbox" id="show-measurements" /> Add measurements</b></label>
+          <div id="measurements-section" class="hidden" style="display:grid;gap:.55rem;grid-template-columns:repeat(2,1fr)">
+            <div class="field">
+              <label for="measure-chest">Chest (in)</label>
+              <input id="measure-chest" type="number" step="0.1" />
+            </div>
+            <div class="field">
+              <label for="measure-length">Length (in)</label>
+              <input id="measure-length" type="number" step="0.1" />
+            </div>
+          </div>
+        </div>
+
+        <div class="field full">
+          <label for="shirt-notes"><b>Notes</b></label>
+          <input id="shirt-notes" placeholder="Optional notes" />
+        </div>
       </div>
       <button type="submit">Add / Update Shirt</button>
     </form>
 
     <!-- Inventory -->
-    <table class="inventory-table" id="inventory-table">
+    <table>
       <thead>
         <tr>
           <th>Name</th>
@@ -99,16 +147,25 @@
       <tbody id="inventory-body"></tbody>
     </table>
 
-    <p class="note" style="margin-top:.75rem;">Sorted alphabetically by name.</p>
+    <div class="note">Sorted alphabetically by name.</div>
   </div>
 
   <script type="module">
-    // Firebase ESM
+    /* --- Set your logo here --- */
+    const logoSrc = "logo.png"; // e.g. "logo.png" (same folder) or "https://…/logo.png"
+    const logoEl = document.getElementById("site-logo");
+    if (logoSrc && typeof logoSrc === "string") {
+      logoEl.src = logoSrc;
+      logoEl.addEventListener("error", () => { logoEl.classList.add("hidden"); });
+    } else {
+      logoEl.classList.add("hidden");
+    }
+
+    /* --- Firebase (unchanged) --- */
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    // Your project config (unchanged)
     const firebaseConfig = {
       apiKey: "AIzaSyBwXtynA-NVN6xkEFS4n5C_AXwMxDUtlJE",
       authDomain: "tshirts-sonnys.firebaseapp.com",
@@ -119,7 +176,6 @@
       appId: "1:926424715206:web:exampleid"
     };
 
-    // Init
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth();
@@ -143,7 +199,7 @@
     const lengthInput = document.getElementById("measure-length");
 
     let isLoggedIn = false;
-    let cache = {};
+    let latestCache = {};
 
     // Auth
     loginBtn.onclick = () => signInWithPopup(auth, provider);
@@ -164,7 +220,7 @@
         form.classList.add("hidden");
         actionsHeader.classList.add("hidden");
       }
-      render(cache); // toggle action cells
+      renderRows(latestCache); // immediately reflect actions column
     });
 
     // Measurements toggle
@@ -172,8 +228,8 @@
       measurementsSection.classList.toggle("hidden", !showMeasurements.checked);
     });
 
-    // Add / Update (key = Name)
-    document.getElementById("add-shirt-form").addEventListener("submit", (e) => {
+    // Add / Update (key = Name, like before)
+    form.addEventListener("submit", (e) => {
       e.preventDefault();
       const name = nameInput.value.trim();
       if (!name) return;
@@ -187,21 +243,21 @@
           ? { chest: chestInput.value || "", length: lengthInput.value || "" }
           : null
       };
-
       set(ref(db, "tshirts/" + name), data);
-      e.target.reset();
+
+      form.reset();
       measurementsSection.classList.add("hidden");
     });
 
-    // Always show inventory (read-only for guests)
-    onValue(ref(db, "tshirts"), (snap) => {
-      cache = snap.val() || {};
-      render(cache);
+    // Inventory (always visible)
+    onValue(ref(db, "tshirts"), (snapshot) => {
+      latestCache = snapshot.val() || {};
+      renderRows(latestCache);
     });
 
-    function render(data) {
+    function renderRows(cache) {
       tableBody.innerHTML = "";
-      const items = Object.values(data).sort((a,b)=>(a.name||"").localeCompare(b.name||""));
+      const items = Object.values(cache).sort((a,b)=>(a.name||"").localeCompare(b.name||""));
       for (const item of items) {
         const m = item.measurements;
         const tr = document.createElement("tr");
@@ -219,7 +275,7 @@
         tableBody.querySelectorAll(".delete-btn").forEach(btn=>{
           btn.addEventListener("click", ()=>{
             const name = btn.getAttribute("data-name");
-            remove(ref(db, "tshirts/" + name));
+            remove(ref(db,"tshirts/"+name));
           });
         });
       }
@@ -231,6 +287,7 @@
   </script>
 </body>
 </html>
+
 
 
 
