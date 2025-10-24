@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="theme-color" content="#e5f0ff" />
+  <meta name="theme-color" content="#f3f4f6" />
   <title>sonny's stock inventory</title>
   <style>
     :root{
+      /* Light, monochrome theme */
       --bg:#f7fafc;
       --panel:#ffffff;
       --line:#e5e7eb;
@@ -16,10 +17,10 @@
       --muted:#64748b;
       --chip:#f2f4f7;
       --chipText:#1f2937;
-      --accent:#3b82f6;           /* light blue accent */
-      --accent-weak:#e5f0ff;      /* pale blue */
-      --good:#0f8b3e;
-      --danger:#b42318;
+      --accent:#111827;          /* neutral dark (was blue) */
+      --accent-weak:#e5e7eb;     /* light gray focus ring */
+      --good:#065f46;
+      --danger:#991b1b;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -36,8 +37,8 @@
 
     .btn{appearance:none; border:1px solid var(--line); background:#fff; color:#111827; padding:12px 14px; border-radius:12px; cursor:pointer; font-weight:600; min-height:44px}
     .btn:hover{border-color:var(--accent)}
-    .btn.primary{background:var(--accent); color:#fff; border-color:#2f6fe0}
-    .btn.good{border-color:#a7f3d0; background:#ecfdf5; color:#064e3b}
+    .btn.primary{background:var(--accent); color:#fff; border-color:#000}
+    .btn.good{border-color:#d1fae5; background:#ecfdf5; color:#065f46}
     .btn.danger{border-color:#fecaca; background:#fef2f2; color:#b91c1c}
     .btn.ghost{background:transparent}
 
@@ -76,7 +77,7 @@
     /* Edit dialog */
     dialog{border:1px solid var(--line); border-radius:16px; padding:0; max-width:720px; width:96vw}
     dialog::backdrop{background:rgba(0,0,0,.35)}
-    .dlg-head{display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); padding:12px 14px; background:linear-gradient(180deg,#fff,#eef5ff)}
+    .dlg-head{display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); padding:12px 14px; background:#fff}
     .dlg-body{padding:14px}
     .dlg-grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px}
     .dlg-foot{display:flex; justify-content:flex-end; gap:8px; border-top:1px solid var(--line); padding:12px 14px; background:#f6f8fb}
@@ -102,7 +103,7 @@
         <select id="filterColor"><option value="">All colours</option></select>
         <select id="filterSize"><option value="">All sizes</option></select>
         <select id="filterBrand"><option value="">All brands</option></select>
-        <select id="filterStyle"><option value="">All styles</option></select>
+        $1<label class="row" style="gap:6px; align-items:center"><input type="checkbox" id="toggleMeas" /> Show measurements</label>
         <div class="spacer"></div>
         <span class="badge">Total items: <strong id="totalItems">0</strong></span>
         <span class="badge">Total qty: <strong id="totalQty">0</strong></span>
@@ -123,8 +124,11 @@
             <select id="newStyle"></select>
             <input id="newQty" type="number" inputmode="numeric" min="0" value="0" style="width:120px"/>
           </div>
-          <div class="row" style="margin-top:6px; gap:6px">
-            <input id="newMeasurements" placeholder="Measurements / notes (optional)" style="flex:1"/>
+          <div class="row" style="margin-top:6px; gap:12px; align-items:center">
+            <label class="row" style="gap:8px; align-items:center; padding:6px 0">
+              <input type="checkbox" id="newHasMeas" /> Add measurements
+            </label>
+            <input id="newMeasurements" placeholder="Measurements / notes (optional)" style="flex:1; display:none"/>
             <button class="btn primary" id="addItemBtn">➕ Add/Update</button>
           </div>
         </div>
@@ -147,12 +151,6 @@
             <button class="btn" id="addStyleBtn">Add</button>
           </div>
         </div>
-        <div>
-          <label class="muted">Data</label>
-          <div class="row" style="margin-top:6px; gap:6px; flex-wrap:wrap">
-            <span class="note">Cloud mode: data syncs to Firebase in real time. Admin password protects UI; Firebase rules protect writes.</span>
-          </div>
-        </div>
       </div>
       <div class="footer">Logged in as <strong>admin</strong>. <button class="btn ghost" id="logoutBtn">Sign out</button></div>
     </section>
@@ -172,7 +170,7 @@
               <th class="sortable" data-key="size"><span>Size</span></th>
               <th class="sortable" data-key="brand"><span>Brand</span></th>
               <th class="sortable" data-key="style"><span>Style</span></th>
-              <th><span>Measurements</span></th>
+              <th class="thMeas"><span>Measurements</span></th>
               <th class="sortable right" data-key="qty"><span>Qty</span></th>
               <th class="right">Actions</th>
             </tr>
@@ -197,7 +195,12 @@
           <label>Brand<br><select id="editBrand"></select></label>
           <label>Style<br><select id="editStyle"></select></label>
           <label>Quantity<br><input id="editQty" type="number" inputmode="numeric" min="0" /></label>
-          <label>Measurements / notes<br><input id="editMeasurements" /></label>
+          <div>
+            <label class="row" style="gap:8px; align-items:center; padding:6px 0">
+              <input type="checkbox" id="editHasMeas" /> Add measurements
+            </label>
+            <label>Measurements / notes<br><input id="editMeasurements" /></label>
+          </div>
         </div>
       </div>
       <div class="dlg-foot">
@@ -230,11 +233,14 @@
 
     const db = firebase.database();
 
+    // ===== Settings =====
+    const BANNED_COLORS = ["Light Brown", "Mono"]; // removed from lists + hidden from table
+
     // ===== In-memory state mirrored from Firebase =====
     const state = {
       sizes: ["Small","Medium","Large","XL","2XL","3XL","4XL"],
       colors: [
-        "Black","White","Yellow (Daisy)","Yellow (Butter)","Navy","Royal Blue","Brown","Light Brown","Red","Cherry Red","Sports Grey","Purple","Pink","Pink (Heliconia)","Orange","Metro Blue","Green (Irish)","Green (Military)","Maroon","Mono"
+        "Black","White","Yellow (Daisy)","Yellow (Butter)","Navy","Royal Blue","Brown","Red","Cherry Red","Sports Grey","Purple","Pink","Pink (Heliconia)","Orange","Metro Blue","Green (Irish)","Green (Military)","Maroon"
       ],
       styles: ["standard","softstyle","mid softstyle","heavy cotton","ultra cotton"],
       brands: [],
@@ -248,7 +254,7 @@
     listsRef.on('value', snap => {
       const v = snap.val() || {};
       state.sizes = v.sizes || state.sizes;
-      state.colors = v.colors || state.colors;
+      state.colors = (v.colors || state.colors).filter(c=>!BANNED_COLORS.includes(c));
       state.styles = v.styles || state.styles;
       state.brands = v.brands || state.brands;
       refreshLists(); render();
@@ -296,19 +302,20 @@
       sel.innerHTML = (includeBlank?'<option value="">—</option>':'') + values.map(v=>`<option>${escapeHtml(v)}</option>`).join('');
     }
     function refreshLists(){
-      fillOptions($('#filterColor'), state.colors);
+      const safeColors = state.colors.filter(c=>!BANNED_COLORS.includes(c));
+      fillOptions($('#filterColor'), safeColors);
       fillOptions($('#filterSize'), state.sizes);
       fillOptions($('#filterBrand'), state.brands);
       fillOptions($('#filterStyle'), state.styles);
 
       // Admin add form (no blank option)
-      fillOptions($('#newColor'), state.colors, false);
+      fillOptions($('#newColor'), safeColors, false);
       fillOptions($('#newSize'), state.sizes, false);
       $('#newBrand').innerHTML = ('(unbranded)'+(state.brands.length?','+state.brands.join(','):'')).split(',').map(v=>`<option>${escapeHtml(v)}</option>`).join('');
       fillOptions($('#newStyle'), state.styles, false);
 
       // Edit dialog selects (no blank)
-      fillOptions($('#editColor'), state.colors, false);
+      fillOptions($('#editColor'), safeColors, false);
       fillOptions($('#editSize'), state.sizes, false);
       $('#editBrand').innerHTML = ('(unbranded)'+(state.brands.length?','+state.brands.join(','):'')).split(',').map(v=>`<option>${escapeHtml(v)}</option>`).join('');
       fillOptions($('#editStyle'), state.styles, false);
@@ -335,11 +342,12 @@
       const fStyle = $('#filterStyle').value;
 
       const rows = state.items
+        .filter(it => !BANNED_COLORS.includes(it.color))
         .filter(it => (!fColor || it.color===fColor)
                     && (!fSize || it.size===fSize)
                     && (!fBrand || it.brand===fBrand)
                     && (!fStyle || it.style===fStyle))
-        .filter(it => !q || `${it.color} ${it.size} ${it.brand} ${it.style} ${it.measurements}`.toLowerCase().includes(q))
+        .filter(it => !q || `${it.color} ${it.size} ${it.brand} ${it.style} ${it.measurements||''}`.toLowerCase().includes(q))
         .sort((a,b)=>{
           let va=a[sortKey]??''; let vb=b[sortKey]??'';
           if (sortKey==='qty'){ va=+va; vb=+vb; }
@@ -369,10 +377,18 @@
 
       // Hide action column if not admin
       $$('#tbody .adminOnly').forEach(el=> el.style.display = isAdmin ? '' : 'none');
+
+      // Show Measurements column only if at least one row has it
+      const showMeas = document.getElementById('toggleMeas')?.checked;
+      document.querySelectorAll('.thMeas, .tdMeas').forEach(el=>{
+        el.style.display = showMeas ? '' : 'none';
+      });
     }
 
     function rowHtml(it){
-      const meas = it.measurements ? `<span class=\"badge\" title=\"${escapeHtml(it.measurements)}\">notes</span>` : '<span class="muted">—</span>';
+      const measCell = (it.measurements && it.measurements.trim())
+        ? `<td class=\"tdMeas\"><span class=\"badge\" title=\"${escapeHtml(it.measurements)}\">notes</span></td>`
+        : `<td class=\"tdMeas\"></td>`;
       const actions = isAdmin ? `
         <div class="row" style="justify-content:flex-end">
           <button id="edit-${it.id}" class="iconbtn" title="Edit">✏️</button>
@@ -383,7 +399,7 @@
         <td>${escapeHtml(it.size)}</td>
         <td>${escapeHtml(it.brand||'(unbranded)')}</td>
         <td>${escapeHtml(it.style)}</td>
-        <td>${meas}</td>
+        ${measCell}
         <td class="right">
           <div class="qty">
             ${isAdmin?`<button id="dec-${it.id}" class="iconbtn" title="Decrease">−</button>`:''}
@@ -399,7 +415,7 @@
     function saveLists(){
       return listsRef.set({
         sizes: state.sizes,
-        colors: state.colors,
+        colors: state.colors.filter(c=>!BANNED_COLORS.includes(c)),
         styles: state.styles,
         brands: state.brands
       });
@@ -435,7 +451,10 @@
       $('#editBrand').value = it.brand?it.brand:'(unbranded)';
       $('#editStyle').value = it.style;
       $('#editQty').value = it.qty;
-      $('#editMeasurements').value = it.measurements||'';
+      const hasMeas = !!(it.measurements && it.measurements.trim());
+      $('#editHasMeas').checked = hasMeas;
+      $('#editMeasurements').value = hasMeas ? it.measurements : '';
+      toggleEditMeas();
       dlg.showModal();
     }
 
@@ -448,7 +467,7 @@
       const brand = $('#editBrand').value==='(unbranded)'? '' : $('#editBrand').value;
       const style = $('#editStyle').value;
       const qty = Math.max(0, Number($('#editQty').value||0));
-      const measurements = $('#editMeasurements').value.trim();
+      const measurements = $('#editHasMeas').checked ? $('#editMeasurements').value.trim() : '';
       upsertItem({...it, color, size, brand, style, qty, measurements});
       addToList('colors', color);
       addToList('sizes', size);
@@ -463,6 +482,7 @@
     function addToList(listName, value){
       const v = String(value||'').trim();
       if (!v) return;
+      if (listName==='colors' && BANNED_COLORS.includes(v)) return; // never re-add banned
       const arr = state[listName];
       if (!arr.includes(v)) arr.push(v);
     }
@@ -475,7 +495,7 @@
       const brand = document.getElementById('newBrand').value === '(unbranded)' ? '' : document.getElementById('newBrand').value;
       const style = document.getElementById('newStyle').value;
       const qty = Number(document.getElementById('newQty').value||0);
-      const measurements = document.getElementById('newMeasurements').value.trim();
+      const measurements = document.getElementById('newHasMeas').checked ? document.getElementById('newMeasurements').value.trim() : '';
 
       const key = x=> `${x.color}|${x.size}|${x.brand}|${x.style}`;
       const existing = state.items.find(x=> key(x)===`${color}|${size}|${brand}|${style}`);
@@ -486,7 +506,7 @@
       addToList('colors', color); addToList('sizes', size); if(brand.trim()) addToList('brands', brand); addToList('styles', style);
       saveLists();
 
-      document.getElementById('newQty').value = 0; document.getElementById('newMeasurements').value='';
+      document.getElementById('newQty').value = 0; document.getElementById('newMeasurements').value=''; document.getElementById('newHasMeas').checked=false; toggleNewMeas();
     });
 
     document.getElementById('addQuick').addEventListener('click', ()=>{
@@ -501,7 +521,7 @@
     document.getElementById('addStyleBtn').addEventListener('click', ()=>{ if (!isAdmin) return alert('Admin only'); const v=document.getElementById('addStyle').value.trim(); if(!v) return; addToList('styles',v); document.getElementById('addStyle').value=''; saveLists(); });
 
     // Filters
-    ['search','filterColor','filterSize','filterBrand','filterStyle'].forEach(id=>{
+    ['search','filterColor','filterSize','filterBrand','filterStyle','toggleMeas'].forEach(id=>{
       document.getElementById(id).addEventListener('input', render, {passive:true});
       document.getElementById(id).addEventListener('change', render, {passive:true});
     });
@@ -509,11 +529,20 @@
     // ==== Helpers ====
     function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c])); }
 
+    // Measurements toggles
+    function toggleNewMeas(){ $('#newMeasurements').style.display = $('#newHasMeas').checked ? '' : 'none'; }
+    function toggleEditMeas(){ $('#editMeasurements').parentElement.style.display = $('#editHasMeas').checked ? '' : 'none'; }
+    $('#newHasMeas').addEventListener('change', toggleNewMeas);
+    $('#editHasMeas').addEventListener('change', toggleEditMeas);
+
     // ==== Initial paint ====
     refreshLists();
     render();
+    toggleNewMeas();
+    toggleEditMeas();
   </script>
 </body>
 </html>
+
 
 
