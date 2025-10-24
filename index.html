@@ -64,12 +64,12 @@
 
     /* ===== Separator: slightly bigger thin line ===== */
     tr.separator td{
-      background:#f7f8fa;             /* gentle band */
+      background:#f7f8fa;
       color: var(--muted);
       font-style: normal;
       border-top: 1px solid var(--line);
       border-bottom: 0;
-      padding-top: 4px;               /* slightly bigger than ultra-thin */
+      padding-top: 4px;
       padding-bottom: 4px;
       line-height: 1.05;
     }
@@ -77,7 +77,6 @@
     tr.separator td .sep-label{ opacity:.75; font-size:12px; }
     tr.separator td .sep-actions{ display:flex; gap:8px; justify-content:flex-end; }
 
-    /* Hide actions when not admin (toggled via JS as well) */
     .col-actions-header{ display:none; }
 
     /* Hide Notes column when toggle is off */
@@ -104,12 +103,26 @@
       padding: 6px 8px;
       font-size: 14px;
     }
-    @media (max-width: 420px) {
-      body.admin header .wrap { padding: 6px 8px; }
-      body.admin #adminPanel { padding: 6px 8px; }
+
+    /* ===== Admin mode on small phones: tighter but still finger-safe ===== */
+    @media (max-width: 420px){
+      body.admin header .wrap{ padding:6px 8px; }
+      body.admin .panel{ padding:8px; }
+      body.admin #adminPanel .row{ gap:6px !important; }
       body.admin #adminPanel select,
       body.admin #adminPanel input,
-      body.admin #adminPanel .btn { font-size: 13px; padding: 5px 7px; }
+      body.admin #adminPanel .btn{
+        min-height:34px;
+        padding:6px 8px;
+        font-size:13px;
+      }
+      body.admin .iconbtn{ width:32px; height:32px; }
+      body.admin .qty .iconbtn{ width:28px; height:28px; }
+      body.admin th, body.admin td{ padding:8px; }
+      body.admin h1{ font-size:20px; }
+      body.admin label.btn.ghost:has(#toggleNotes){
+        padding:4px 6px; font-size:12px; min-height:auto;
+      }
     }
   </style>
 </head>
@@ -201,7 +214,7 @@
     </form>
   </dialog>
 
-  <!-- Admin login dialog -->
+    <!-- Admin login dialog -->
   <dialog id="loginDialog">
     <form method="dialog" id="loginForm">
       <div class="row" style="justify-content:space-between; border-bottom:1px solid var(--line); padding:12px 14px; background:#f7f7f8">
@@ -251,9 +264,7 @@
         "Brown","Red","Cherry Red","Sports Grey","Purple","Pink",
         "Pink (Heliconia)","Orange","Metro Blue","Green (Irish)","Green (Military)","Maroon"
       ],
-      // Note the style label change here
       styles: ["standard","soft style","mid softstyle","heavy cotton","ultra cotton"],
-      // Seed with Gildan as default brand
       brands: ["Gildan"],
       items: [] // {id,color,size,brand,style,notes,qty,ord,separator?:true,label?:string}
     };
@@ -266,8 +277,7 @@
       const v = snap.val() || {};
       state.sizes  = v.sizes  || state.sizes;
       state.colors = v.colors || state.colors;
-      state.styles = (v.styles || state.styles).map(s => s === 'softstyle' ? 'soft style' : s); // migrate label
-      // Ensure Gildan present & first
+      state.styles = (v.styles || state.styles).map(s => s === 'softstyle' ? 'soft style' : s);
       const incomingBrands = v.brands || state.brands;
       const uniq = Array.from(new Set(incomingBrands));
       if (!uniq.includes("Gildan")) uniq.unshift("Gildan");
@@ -288,7 +298,6 @@
           style: convertedStyle,
           ord: Number.isFinite(+it?.ord) ? +it.ord : index++ // assign ord if missing
         };
-        // If style migrated, push update (non-blocking)
         if (it?.style === 'softstyle') {
           db.ref('items/'+(it.id||key)+'/style').set('soft style').catch(()=>{});
         }
@@ -303,7 +312,7 @@
     const uid = () => Math.random().toString(36).slice(2,10);
     const escapeHtml = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
 
-    // ==== Admin UI gate (client-side only, kept) ====
+    // ==== Admin UI gate (client-side only) ====
     const ADMIN_PASSWORD = 'sonny';
     let isAdmin = sessionStorage.getItem('tee.admin') === '1';
     toggleAdminUI(isAdmin);
@@ -311,7 +320,7 @@
     const loginDlg = document.getElementById('loginDialog');
     const loginPw  = document.getElementById('loginPassword');
 
-    $('#loginBtn').addEventListener('click', () => {
+    document.getElementById('loginBtn').addEventListener('click', () => {
       if (isAdmin){ toggleAdmin(false); return; }
       try { loginDlg.showModal(); loginPw.focus(); }
       catch {
@@ -321,16 +330,16 @@
       }
     });
 
-    $('#loginForm').addEventListener('submit', (e)=>{
+    document.getElementById('loginForm').addEventListener('submit', (e)=>{
       e.preventDefault();
       const pw = loginPw.value || '';
       if (pw === ADMIN_PASSWORD){ loginPw.value=''; loginDlg.close(); toggleAdmin(true); }
       else alert('Wrong password');
     });
 
-    $('#loginSubmit').addEventListener('click', (e)=>{
+    document.getElementById('loginSubmit').addEventListener('click', (e)=>{
       e.preventDefault();
-      $('#loginForm').dispatchEvent(new Event('submit', {cancelable:true}));
+      document.getElementById('loginForm').dispatchEvent(new Event('submit', {cancelable:true}));
     });
 
     function toggleAdmin(on){
@@ -341,9 +350,9 @@
 
     function toggleAdminUI(on){
       document.body.classList.toggle('admin', on); // compact mode when admin
-      $('#adminPanel').setAttribute('aria-hidden', on ? 'false' : 'true');
-      $('#adminPanel').style.display = on ? '' : 'none';
-      $('#loginBtn').textContent = on ? '🚪 Sign out' : '🔐 Admin';
+      document.getElementById('adminPanel').setAttribute('aria-hidden', on ? 'false' : 'true');
+      document.getElementById('adminPanel').style.display = on ? '' : 'none';
+      document.getElementById('loginBtn').textContent = on ? '🚪 Sign out' : '🔐 Admin';
 
       const thActions = document.querySelector('.col-actions-header');
       if (thActions) thActions.style.display = on ? '' : 'none';
@@ -361,44 +370,35 @@
       sel.innerHTML = brands.map(v => `<option>${escapeHtml(v)}</option>`).join('');
     }
     function refreshLists(){
-      // Make sure "Gildan" is present and first in brands
       if (!state.brands.includes("Gildan")) state.brands.unshift("Gildan");
-
-      // Default styles with “soft style” label
       state.styles = state.styles.map(s => s === 'softstyle' ? 'soft style' : s);
       if (!state.styles.includes('heavy cotton')) state.styles.push('heavy cotton');
 
-      // Admin add form (no blank)
-      fillOptions($('#newColor'), state.colors, false);
-      fillOptions($('#newSize'), state.sizes, false);
-      fillBrandSelect($('#newBrand'));  // includes (unbranded)
-      if ([...$('#newBrand').options].some(o=>o.value==='Gildan')) $('#newBrand').value = 'Gildan';
-      fillOptions($('#newStyle'), state.styles, false);
-      // Default to heavy cotton
-      if ([...$('#newStyle').options].some(o=>o.value==='heavy cotton')) $('#newStyle').value = 'heavy cotton';
+      fillOptions(document.getElementById('newColor'), state.colors, false);
+      fillOptions(document.getElementById('newSize'), state.sizes, false);
+      fillBrandSelect(document.getElementById('newBrand'));
+      if ([...document.getElementById('newBrand').options].some(o=>o.value==='Gildan')) document.getElementById('newBrand').value = 'Gildan';
+      fillOptions(document.getElementById('newStyle'), state.styles, false);
+      if ([...document.getElementById('newStyle').options].some(o=>o.value==='heavy cotton')) document.getElementById('newStyle').value = 'heavy cotton';
 
-      // Edit selects
-      fillOptions($('#editColor'), state.colors, false);
-      fillOptions($('#editSize'), state.sizes, false);
-      fillBrandSelect($('#editBrand')); // includes (unbranded)
-      fillOptions($('#editStyle'), state.styles, false);
+      fillOptions(document.getElementById('editColor'), state.colors, false);
+      fillOptions(document.getElementById('editSize'), state.sizes, false);
+      fillBrandSelect(document.getElementById('editBrand'));
+      fillOptions(document.getElementById('editStyle'), state.styles, false);
     }
 
     // ==== Rendering (ordered) ====
     function render(){
-      // Always sort by ord ascending for display
       const rows = [...state.items].sort((a,b)=> (a.ord ?? 0) - (b.ord ?? 0));
-      const tbody = $('#tbody');
+      const tbody = document.getElementById('tbody');
       tbody.innerHTML = rows.map(it => rowHtml(it)).join('');
 
-      // totals (exclude separators)
       const stockRows = rows.filter(r => !r.separator);
       const totalItems = stockRows.length;
       const totalQty = stockRows.reduce((s,it)=> s + Number(it.qty||0), 0);
-      $('#totalItems').textContent = totalItems;
-      $('#totalQty').textContent = totalQty;
+      document.getElementById('totalItems').textContent = totalItems;
+      document.getElementById('totalQty').textContent = totalQty;
 
-      // Sync actions col visibility with admin state
       $$('#tbody td.col-actions').forEach(el=> el.style.display = isAdmin ? '' : 'none');
     }
 
@@ -444,7 +444,7 @@
       </tr>`;
     }
 
-    // ===== CRUD helpers (write to Firebase) =====
+    // ===== CRUD helpers =====
     function saveLists(){
       return listsRef.set({
         sizes: state.sizes,
@@ -454,7 +454,6 @@
       });
     }
 
-    // Default brand to Gildan if missing, default style to heavy cotton, ord optional
     function upsertItem(obj){
       const id = obj.id || uid();
       const brand = (obj.brand ?? '').toString().trim() || 'Gildan';
@@ -500,7 +499,7 @@
       db.ref('items/'+id+'/qty').set(next);
     }
 
-    // ===== Ordering (move up/down) =====
+    // ===== Ordering =====
     function nextOrd(){
       if (!state.items.length) return 0;
       return Math.max(...state.items.map(i => +i.ord || 0)) + 1;
@@ -512,10 +511,8 @@
       if (!a || !b) return;
       const oa = a.ord ?? 0;
       const ob = b.ord ?? 0;
-      // Optimistic UI
-      a.ord = ob; b.ord = oa;
+      a.ord = ob; b.ord = oa; // optimistic
       render();
-      // Persist
       const pa = db.ref('items/'+a.id+'/ord').set(ob);
       const pb = db.ref('items/'+b.id+'/ord').set(oa);
       Promise.all([pa,pb]).catch(err=>{
@@ -523,7 +520,7 @@
       });
     }
 
-    function move(id, dir){ // dir: -1 up, +1 down
+    function move(id, dir){
       const ordered = [...state.items].sort((a,b)=>(a.ord??0)-(b.ord??0));
       const idx = ordered.findIndex(i=>i.id===id);
       if (idx < 0) return;
@@ -548,11 +545,11 @@
         return;
       }
       refreshLists();
-      $('#editColor').value = it.color || state.colors[0] || '';
-      $('#editSize').value  = it.size  || state.sizes[0]  || '';
-      $('#editBrand').value = it.brand ? it.brand : '(unbranded)';
-      $('#editStyle').value = it.style || 'heavy cotton';
-      $('#editQty').value   = it.qty ?? 0;
+      document.getElementById('editColor').value = it.color || state.colors[0] || '';
+      document.getElementById('editSize').value  = it.size  || state.sizes[0]  || '';
+      document.getElementById('editBrand').value = it.brand ? it.brand : '(unbranded)';
+      document.getElementById('editStyle').value = it.style || 'heavy cotton';
+      document.getElementById('editQty').value   = it.qty ?? 0;
       document.getElementById('editNotes').value = it.notes||'';
       dlg.showModal();
     }
@@ -561,12 +558,12 @@
       e.preventDefault();
       if (!editingId) return dlg.close();
       const it = state.items.find(x=>x.id===editingId); if(!it) return;
-      const color = $('#editColor').value;
-      const size  = $('#editSize').value;
-      const brandSel = $('#editBrand').value;
+      const color = document.getElementById('editColor').value;
+      const size  = document.getElementById('editSize').value;
+      const brandSel = document.getElementById('editBrand').value;
       const brand = brandSel==='(unbranded)'? '' : brandSel || 'Gildan';
-      const style = ($('#editStyle').value === 'softstyle') ? 'soft style' : ($('#editStyle').value || 'heavy cotton');
-      const qty   = Math.max(0, Number($('#editQty').value||0));
+      const style = (document.getElementById('editStyle').value === 'softstyle') ? 'soft style' : (document.getElementById('editStyle').value || 'heavy cotton');
+      const qty   = Math.max(0, Number(document.getElementById('editQty').value||0));
       const notes = document.getElementById('editNotes').value.trim();
       upsertItem({...it, color, size, brand, style, qty, notes});
       addToList('colors', color);
@@ -682,3 +679,4 @@
   </script>
 </body>
 </html>
+
