@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,16 +19,19 @@
       --chipText:#111827;
       --accent:#111827;         /* mono accent */
       --accent-weak:#e5e7eb;    /* subtle focus */
-      --good:#0f8b3e;
-      --danger:#b42318;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; background:var(--bg); color:var(--text); -webkit-text-size-adjust:100%; -webkit-tap-highlight-color: rgba(0,0,0,0)}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      background:var(--bg); color:var(--text);
+      -webkit-text-size-adjust:100%;
+      -webkit-tap-highlight-color: rgba(0,0,0,0)
+    }
     header{position:sticky; top:0; z-index:5; backdrop-filter:saturate(1.05) blur(10px); background:rgba(246,247,249,0.9); border-bottom:1px solid var(--line)}
     .wrap{max-width:1100px; margin:0 auto; padding:16px}
     h1{margin:0; font-size:24px; letter-spacing:.2px}
-    .sub{color:var(--muted); font-size:12px}
     .row{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
     .spacer{flex:1}
 
@@ -39,13 +41,14 @@
     .btn{appearance:none; border:1px solid var(--line); background:#fff; color:#111827; padding:12px 14px; border-radius:12px; cursor:pointer; font-weight:600; min-height:44px}
     .btn:hover{border-color:var(--accent)}
     .btn.primary{background:var(--accent); color:#fff; border-color:#111827}
-    .btn.good{border-color:#a7f3d0; background:#ecfdf5; color:#064e3b}
-    .btn.danger{border-color:#fecaca; background:#fef2f2; color:#b91c1c}
     .btn.ghost{background:transparent}
 
     .toolbar{margin-top:8px; display:flex; gap:10px; flex-wrap:wrap}
-    input, select, textarea{background:#fff; color:#0b1220; border:1px solid var(--line); padding:10px 12px; border-radius:12px; outline:none; min-height:44px; font-size:16px}
-    input:focus, select:focus, textarea:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-weak)}
+    input, select{
+      background:#fff; color:#0b1220; border:1px solid var(--line);
+      padding:10px 12px; border-radius:12px; outline:none; min-height:44px; font-size:16px
+    }
+    input:focus, select:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-weak)}
 
     main{max-width:1100px; margin:20px auto; padding:0 16px 80px}
 
@@ -66,12 +69,8 @@
 
     .grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:12px}
     .muted{color:var(--muted)}
-    .badge{display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:var(--chip); color:var(--chipText); font-size:12px}
-
     .right{ text-align:right }
-    .note{font-size:12px; color:var(--muted)}
     .hidden{display:none !important}
-
     .footer{color:var(--muted); font-size:12px; margin-top:4px}
   </style>
 </head>
@@ -81,10 +80,7 @@
       <div class="row">
         <div class="logo">
           <img alt="Sonny logo" src="https://sonny.org.uk/cdn/shop/files/logo.png?v=1723800320&width=300" />
-          <div>
-            <h1>sonny's stock inventory</h1>
-            <div class="sub">Fast, simple, editable. (Cloud‑synced with Firebase Realtime Database.)</div>
-          </div>
+          <div><h1>sonny's stock inventory</h1></div>
         </div>
         <div class="spacer"></div>
         <button id="loginBtn" class="btn" title="Admin area">🔐 Admin</button>
@@ -95,9 +91,11 @@
         <select id="filterSize"><option value="">All sizes</option></select>
         <select id="filterBrand"><option value="">All brands</option></select>
         <select id="filterStyle"><option value="">All styles</option></select>
+        <label class="row" style="gap:6px;align-items:center;margin-left:8px">
+          <input type="checkbox" id="toggleNotes"> Show notes
+        </label>
         <div class="spacer"></div>
-        <span class="badge">Total items: <strong id="totalItems">0</strong></span>
-        <span class="badge">Total qty: <strong id="totalQty">0</strong></span>
+        <span class="muted">Total items: <strong id="totalItems">0</strong> • Total qty: <strong id="totalQty">0</strong></span>
       </div>
     </div>
   </header>
@@ -116,8 +114,6 @@
             <input id="newQty" type="number" inputmode="numeric" min="0" value="0" style="width:120px"/>
           </div>
           <div class="row" style="margin-top:6px; gap:10px; align-items:center">
-            <label class="row" style="gap:6px"><input type="checkbox" id="newHasMeas"> Add measurements</label>
-            <input id="newMeasurements" placeholder="Measurements / notes" style="flex:1; display:none"/>
             <button class="btn primary" id="addItemBtn">➕ Add/Update</button>
           </div>
         </div>
@@ -147,7 +143,6 @@
     <section class="panel" style="margin-top:14px">
       <div class="row" style="align-items:flex-end">
         <h3 style="margin-right:8px">Current stock</h3>
-        <span class="note">Tap a column to sort • Use +/− to adjust quantities • Tap ✏️ to edit</span>
         <div class="spacer"></div>
         <button class="btn" id="addQuick" title="Add a new blank row with defaults (admin)">New row</button>
       </div>
@@ -159,7 +154,7 @@
               <th class="sortable" data-key="size"><span>Size</span></th>
               <th class="sortable" data-key="brand"><span>Brand</span></th>
               <th class="sortable" data-key="style"><span>Style</span></th>
-              <th id="thMeas"><span>Measurements</span></th>
+              <th id="thNotes"><span>Notes</span></th>
               <th class="sortable right" data-key="qty"><span>Qty</span></th>
               <th class="right">Actions</th>
             </tr>
@@ -173,22 +168,21 @@
   <!-- Edit item dialog -->
   <dialog id="editDialog">
     <form method="dialog">
-      <div class="dlg-head">
+      <div class="row" style="justify-content:space-between; border-bottom:1px solid var(--line); padding:12px 14px; background:#f7f7f8">
         <strong>Edit item</strong>
         <button class="iconbtn" value="cancel" title="Close">✖</button>
       </div>
-      <div class="dlg-body">
-        <div class="dlg-grid">
+      <div style="padding:14px">
+        <div class="grid">
           <label>Colour<br><select id="editColor"></select></label>
           <label>Size<br><select id="editSize"></select></label>
           <label>Brand<br><select id="editBrand"></select></label>
           <label>Style<br><select id="editStyle"></select></label>
           <label>Quantity<br><input id="editQty" type="number" inputmode="numeric" min="0" /></label>
-          <label class="row" style="gap:6px; align-items:center">Has measurements<br><input type="checkbox" id="editHasMeas"></label>
-          <label id="editMeasWrap" style="display:none">Measurements / notes<br><input id="editMeasurements" /></label>
+          <label>Notes<br><input id="editNotes" placeholder="Optional note (e.g. 24)" /></label>
         </div>
       </div>
-      <div class="dlg-foot">
+      <div style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid var(--line); padding:12px 14px; background:#f6f8fb">
         <button class="btn" value="cancel">Cancel</button>
         <button class="btn primary" id="saveEditBtn" value="default">Save changes</button>
       </div>
@@ -212,21 +206,22 @@
       appId: "1:106241030509:web:b546fa7eeae769f6694264"
     };
 
-    // Initialize Firebase and sign in anonymously
+    // Initialize Firebase + anonymous auth
     firebase.initializeApp(firebaseConfig);
-    firebase.auth().signInAnonymously().catch(err=>console.error('Auth error', err));
-
+    firebase.auth().signInAnonymously().catch(err => console.error('Auth error', err));
     const db = firebase.database();
 
     // ===== In-memory state mirrored from Firebase =====
     const state = {
       sizes: ["Small","Medium","Large","XL","2XL","3XL","4XL"],
       colors: [
-        "Black","White","Yellow (Daisy)","Yellow (Butter)","Navy","Royal Blue","Brown","Red","Cherry Red","Sports Grey","Purple","Pink","Pink (Heliconia)","Orange","Metro Blue","Green (Irish)","Green (Military)","Maroon"
+        "Black","White","Yellow (Daisy)","Yellow (Butter)","Navy","Royal Blue",
+        "Brown","Red","Cherry Red","Sports Grey","Purple","Pink",
+        "Pink (Heliconia)","Orange","Metro Blue","Green (Irish)","Green (Military)","Maroon"
       ],
       styles: ["standard","softstyle","mid softstyle","heavy cotton","ultra cotton"],
       brands: [],
-      items: [] // {id,color,size,brand,style,hasMeasurements,measurements,qty}
+      items: [] // {id,color,size,brand,style,notes,qty}
     };
 
     // Live listeners
@@ -235,7 +230,7 @@
 
     listsRef.on('value', snap => {
       const v = snap.val() || {};
-      state.sizes = v.sizes || state.sizes;
+      state.sizes  = v.sizes  || state.sizes;
       state.colors = v.colors || state.colors;
       state.styles = v.styles || state.styles;
       state.brands = v.brands || state.brands;
@@ -249,7 +244,7 @@
     });
 
     // ==== Utility helpers ====
-    const $ = sel => document.querySelector(sel);
+    const $  = sel => document.querySelector(sel);
     const $$ = sel => Array.from(document.querySelectorAll(sel));
     const uid = () => Math.random().toString(36).slice(2,10);
 
@@ -276,7 +271,6 @@
       $('#adminPanel').style.display = on ? '' : 'none';
       $('#loginBtn').textContent = on ? '🚪 Sign out' : '🔐 Admin';
       $('#addQuick').style.display = on ? '' : 'none';
-      // Toggle actions header visibility to match admin
       document.querySelector('th.right:last-child').style.visibility = on ? 'visible' : 'hidden';
       render();
     }
@@ -291,13 +285,13 @@
       fillOptions($('#filterBrand'), state.brands);
       fillOptions($('#filterStyle'), state.styles);
 
-      // Admin add form (no blank option)
+      // Admin add form (no blank)
       fillOptions($('#newColor'), state.colors, false);
       fillOptions($('#newSize'), state.sizes, false);
       $('#newBrand').innerHTML = ('(unbranded)'+(state.brands.length?','+state.brands.join(','):'')).split(',').map(v=>`<option>${escapeHtml(v)}</option>`).join('');
       fillOptions($('#newStyle'), state.styles, false);
 
-      // Edit dialog selects (no blank)
+      // Edit selects
       fillOptions($('#editColor'), state.colors, false);
       fillOptions($('#editSize'), state.sizes, false);
       $('#editBrand').innerHTML = ('(unbranded)'+(state.brands.length?','+state.brands.join(','):'')).split(',').map(v=>`<option>${escapeHtml(v)}</option>`).join('');
@@ -307,7 +301,6 @@
     // ==== Sorting ====
     let sortKey = 'color';
     let sortDir = 1; // 1 asc, -1 desc
-
     $$('#table th.sortable').forEach(th=> th.addEventListener('click', ()=>{
       const key = th.dataset.key;
       if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
@@ -320,16 +313,17 @@
     function render(){
       const q = $('#search').value.trim().toLowerCase();
       const fColor = $('#filterColor').value;
-      const fSize = $('#filterSize').value;
+      const fSize  = $('#filterSize').value;
       const fBrand = $('#filterBrand').value;
       const fStyle = $('#filterStyle').value;
+      const showNotes = document.getElementById('toggleNotes').checked;
 
       const rows = state.items
         .filter(it => (!fColor || it.color===fColor)
-                    && (!fSize || it.size===fSize)
-                    && (!fBrand || it.brand===fBrand)
-                    && (!fStyle || it.style===fStyle))
-        .filter(it => !q || `${it.color} ${it.size} ${it.brand} ${it.style} ${it.measurements}`.toLowerCase().includes(q))
+                   && (!fSize  || it.size===fSize)
+                   && (!fBrand || it.brand===fBrand)
+                   && (!fStyle || it.style===fStyle))
+        .filter(it => !q || `${it.color} ${it.size} ${it.brand} ${it.style} ${it.notes||''}`.toLowerCase().includes(q))
         .sort((a,b)=>{
           let va=a[sortKey]??''; let vb=b[sortKey]??'';
           if (sortKey==='qty'){ va=+va; vb=+vb; }
@@ -339,12 +333,11 @@
       const tbody = $('#tbody');
       tbody.innerHTML = rows.map(it => rowHtml(it)).join('');
 
-      // show/hide measurements column based on visible rows
-      const hasMeas = rows.some(it=> it.hasMeasurements && it.measurements && it.measurements.trim()!=='' );
-      document.getElementById('thMeas').style.display = hasMeas ? '' : 'none';
-      $$('#tbody td.col-meas').forEach(td=> td.style.display = hasMeas ? '' : 'none');
+      // show/hide notes column
+      document.getElementById('thNotes').style.display = showNotes ? '' : 'none';
+      $$('#tbody td.col-notes').forEach(td=> td.style.display = showNotes ? '' : 'none');
 
-      // show totals
+      // totals
       const totalItems = rows.length;
       const totalQty = rows.reduce((s,it)=>s+Number(it.qty||0),0);
       $('#totalItems').textContent = totalItems;
@@ -352,14 +345,10 @@
 
       // Bind action buttons
       rows.forEach(it=>{
-        const inc = document.getElementById('inc-'+it.id);
-        const dec = document.getElementById('dec-'+it.id);
-        const del = document.getElementById('del-'+it.id);
-        const edit = document.getElementById('edit-'+it.id);
-        inc?.addEventListener('click',()=>adjQty(it.id, +1));
-        dec?.addEventListener('click',()=>adjQty(it.id, -1));
-        del?.addEventListener('click',()=>removeItem(it.id));
-        edit?.addEventListener('click',()=>openEdit(it.id));
+        document.getElementById('inc-'+it.id)?.addEventListener('click',()=>adjQty(it.id, +1));
+        document.getElementById('dec-'+it.id)?.addEventListener('click',()=>adjQty(it.id, -1));
+        document.getElementById('del-'+it.id)?.addEventListener('click',()=>removeItem(it.id));
+        document.getElementById('edit-'+it.id)?.addEventListener('click',()=>openEdit(it.id));
       });
 
       // Hide action column if not admin
@@ -367,9 +356,7 @@
     }
 
     function rowHtml(it){
-      const measCell = (it.hasMeasurements && it.measurements)
-        ? `<td class="col-meas"><span class="badge" title="${escapeHtml(it.measurements)}">notes</span></td>`
-        : `<td class="col-meas"><span class="muted">—</span></td>`;
+      const notesCell = `<td class="col-notes">${it.notes ? escapeHtml(it.notes) : '<span class="muted">—</span>'}</td>`;
       const actions = isAdmin ? `
         <div class="row" style="justify-content:flex-end">
           <button id="edit-${it.id}" class="iconbtn" title="Edit">✏️</button>
@@ -380,7 +367,7 @@
         <td>${escapeHtml(it.size)}</td>
         <td>${escapeHtml(it.brand||'(unbranded)')}</td>
         <td>${escapeHtml(it.style)}</td>
-        ${measCell}
+        ${notesCell}
         <td class="right">
           <div class="qty">
             ${isAdmin?`<button id="dec-${it.id}" class="iconbtn" title="Decrease">−</button>`:''}
@@ -403,7 +390,7 @@
     }
     function upsertItem(obj){
       const id = obj.id || uid();
-      const clean = {...obj, id, qty: Number(obj.qty||0), hasMeasurements: !!obj.hasMeasurements, measurements: obj.hasMeasurements ? (obj.measurements||'') : ''};
+      const clean = {...obj, id, qty: Number(obj.qty||0), notes: (obj.notes||'')};
       return db.ref('items/'+id).set(clean);
     }
     function deleteItem(id){ return db.ref('items/'+id).remove(); }
@@ -428,13 +415,11 @@
       const it = state.items.find(x=>x.id===id); if(!it) return;
       refreshLists();
       $('#editColor').value = it.color;
-      $('#editSize').value = it.size;
+      $('#editSize').value  = it.size;
       $('#editBrand').value = it.brand?it.brand:'(unbranded)';
       $('#editStyle').value = it.style;
-      $('#editQty').value = it.qty;
-      $('#editHasMeas').checked = !!it.hasMeasurements;
-      $('#editMeasurements').value = it.measurements||'';
-      document.getElementById('editMeasWrap').style.display = (it.hasMeasurements? '' : 'none');
+      $('#editQty').value   = it.qty;
+      document.getElementById('editNotes').value = it.notes||'';
       dlg.showModal();
     }
 
@@ -443,15 +428,14 @@
       if (!editingId) return dlg.close();
       const it = state.items.find(x=>x.id===editingId); if(!it) return;
       const color = $('#editColor').value;
-      const size = $('#editSize').value;
+      const size  = $('#editSize').value;
       const brand = $('#editBrand').value==='(unbranded)'? '' : $('#editBrand').value;
       const style = $('#editStyle').value;
-      const qty = Math.max(0, Number($('#editQty').value||0));
-      const hasMeasurements = document.getElementById('editHasMeas').checked;
-      const measurements = hasMeasurements ? $('#editMeasurements').value.trim() : '';
-      upsertItem({...it, color, size, brand, style, qty, hasMeasurements, measurements});
+      const qty   = Math.max(0, Number($('#editQty').value||0));
+      const notes = document.getElementById('editNotes').value.trim();
+      upsertItem({...it, color, size, brand, style, qty, notes});
       addToList('colors', color);
-      addToList('sizes', size);
+      addToList('sizes',  size);
       if (brand.trim()) addToList('brands', brand);
       addToList('styles', style);
       saveLists();
@@ -459,15 +443,6 @@
     });
 
     dlg.addEventListener('close', ()=>{ editingId = null; });
-
-    // Toggle new measurements input visibility
-    document.getElementById('newHasMeas').addEventListener('change', (e)=>{
-      document.getElementById('newMeasurements').style.display = e.target.checked ? '' : 'none';
-    });
-    // Toggle edit measurements input visibility
-    document.getElementById('editHasMeas').addEventListener('change', (e)=>{
-      document.getElementById('editMeasWrap').style.display = e.target.checked ? '' : 'none';
-    });
 
     function addToList(listName, value){
       const v = String(value||'').trim();
@@ -480,39 +455,55 @@
     document.getElementById('addItemBtn').addEventListener('click', ()=>{
       if (!isAdmin) return alert('Admin only');
       const color = document.getElementById('newColor').value;
-      const size = document.getElementById('newSize').value;
+      const size  = document.getElementById('newSize').value;
       const brand = document.getElementById('newBrand').value === '(unbranded)' ? '' : document.getElementById('newBrand').value;
       const style = document.getElementById('newStyle').value;
-      const qty = Number(document.getElementById('newQty').value||0);
-      const hasMeasurements = document.getElementById('newHasMeas').checked;
-      const measurementsInput = document.getElementById('newMeasurements');
-      const measurements = hasMeasurements ? measurementsInput.value.trim() : '';
+      const qty   = Number(document.getElementById('newQty').value||0);
 
       const key = x=> `${x.color}|${x.size}|${x.brand}|${x.style}`;
       const existing = state.items.find(x=> key(x)===`${color}|${size}|${brand}|${style}`);
-      if (existing){ upsertItem({...existing, qty, hasMeasurements, measurements}); }
-      else upsertItem({id:uid(), color, size, brand, style, hasMeasurements, measurements, qty});
+      if (existing){ upsertItem({...existing, qty}); }
+      else upsertItem({id:uid(), color, size, brand, style, qty});
 
       // Also sync lists
-      addToList('colors', color); addToList('sizes', size); if(brand.trim()) addToList('brands', brand); addToList('styles', style);
+      addToList('colors', color);
+      addToList('sizes',  size);
+      if(brand.trim()) addToList('brands', brand);
+      addToList('styles', style);
       saveLists();
 
-      document.getElementById('newQty').value = 0; document.getElementById('newHasMeas').checked=false; document.getElementById('newMeasurements').style.display='none'; document.getElementById('newMeasurements').value='';
+      document.getElementById('newQty').value = 0;
     });
 
     document.getElementById('addQuick').addEventListener('click', ()=>{
       if (!isAdmin) return alert('Admin only');
-      const def = {color: state.colors[0], size: state.sizes[0], brand: '', style: state.styles[0], measurements:'', qty:0};
+      const def = {color: state.colors[0], size: state.sizes[0], brand: '', style: state.styles[0], notes:'', qty:0};
       upsertItem({id:uid(), ...def});
     });
 
-    document.getElementById('addColorBtn').addEventListener('click', ()=>{ if (!isAdmin) return alert('Admin only'); const v=document.getElementById('addColor').value.trim(); if(!v) return; addToList('colors',v); document.getElementById('addColor').value=''; saveLists(); });
-    document.getElementById('addSizeBtn').addEventListener('click', ()=>{ if (!isAdmin) return alert('Admin only'); const v=document.getElementById('addSize').value.trim(); if(!v) return; addToList('sizes',v); document.getElementById('addSize').value=''; saveLists(); });
-    document.getElementById('addBrandBtn').addEventListener('click', ()=>{ if (!isAdmin) return alert('Admin only'); const v=document.getElementById('addBrand').value.trim(); if(!v) return; addToList('brands',v); document.getElementById('addBrand').value=''; saveLists(); });
-    document.getElementById('addStyleBtn').addEventListener('click', ()=>{ if (!isAdmin) return alert('Admin only'); const v=document.getElementById('addStyle').value.trim(); if(!v) return; addToList('styles',v); document.getElementById('addStyle').value=''; saveLists(); });
+    document.getElementById('addColorBtn').addEventListener('click', ()=>{
+      if (!isAdmin) return alert('Admin only');
+      const v=document.getElementById('addColor').value.trim(); if(!v) return;
+      addToList('colors',v); document.getElementById('addColor').value=''; saveLists();
+    });
+    document.getElementById('addSizeBtn').addEventListener('click', ()=>{
+      if (!isAdmin) return alert('Admin only');
+      const v=document.getElementById('addSize').value.trim(); if(!v) return;
+      addToList('sizes',v); document.getElementById('addSize').value=''; saveLists();
+    });
+    document.getElementById('addBrandBtn').addEventListener('click', ()=>{
+      if (!isAdmin) return alert('Admin only');
+      const v=document.getElementById('addBrand').value.trim(); if(!v) return;
+      addToList('brands',v); document.getElementById('addBrand').value=''; saveLists();
+    });
+    document.getElementById('addStyleBtn').addEventListener('click', ()=>{
+      if (!isAdmin) return alert('Admin only');
+      const v=document.getElementById('addStyle').value.trim(); if(!v) return;
+      addToList('styles',v); document.getElementById('addStyle').value=''; saveLists();
+    });
 
     // Filters
-    ['search','filterColor','filterSize','filterBrand','filterStyle'].forEach(id=>{
+    ['search','filterColor','filterSize','filterBrand','filterStyle','toggleNotes'].forEach(id=>{
       document.getElementById(id).addEventListener('input', render, {passive:true});
       document.getElementById(id).addEventListener('change', render, {passive:true});
     });
@@ -526,23 +517,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
