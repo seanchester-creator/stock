@@ -16,8 +16,10 @@
       --muted:#6b7280;
       --accent:#111827;
       --accent-weak:#e5e7eb;
-      --separator-bg:#fffde3;
-      --separator-border:#facc15;
+      /* yellow separator theme */
+      --separator-bg:#fffbe6;     /* soft yellow */
+      --separator-border:#facc15; /* amber-400 */
+      --separator-text:#92400e;   /* amber-900-ish for contrast */
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -64,8 +66,23 @@
     .right{text-align:right}
     td.right strong {font-variant-numeric:tabular-nums}
 
-    tr.sep td{background:var(--separator-bg); border-top:2px solid var(--separator-border); border-bottom:2px solid var(--separator-border); font-weight:600; text-align:center; color:#92400e;}
-    tr.sep input{border:1px solid var(--separator-border); background:#fffdf0; border-radius:6px; padding:4px 6px; font-weight:600; text-align:center;}
+    /* Yellow separator row styling */
+    tr.sep td{
+      background:var(--separator-bg);
+      border-top:2px solid var(--separator-border);
+      border-bottom:2px solid var(--separator-border);
+      color:var(--separator-text);
+      font-weight:700;
+    }
+    .sep-label{
+      width:100%; max-width:500px;
+      border:1px solid var(--separator-border);
+      background:#fffdf5;
+      border-radius:8px;
+      padding:8px 10px;
+      text-align:center;
+      font-weight:700;
+    }
   </style>
 </head>
 <body>
@@ -77,7 +94,7 @@
           <div><h1>sonny's stock inventory</h1></div>
         </div>
         <div class="spacer"></div>
-        <button id="loginBtn" class="btn" title="Admin area">🔐 Admin</button>
+        <button id="loginBtn" class="btn" title="Admin area" aria-label="Admin area">🔐 Admin</button>
       </div>
       <div class="toolbar">
         <label class="row" style="gap:6px;align-items:center;margin-left:0">
@@ -88,25 +105,39 @@
       </div>
     </div>
   </header>
+
   <main>
+    <section class="panel" id="adminPanel" aria-hidden="true" style="display:none">
+      <h3>Admin controls</h3>
+      <div class="row" style="gap:10px; flex-wrap:wrap">
+        <select id="newColor"></select>
+        <select id="newSize"></select>
+        <select id="newBrand"></select>
+        <select id="newStyle"></select>
+        <input id="newQty" type="number" inputmode="numeric" min="0" value="0" style="width:120px"/>
+        <button class="btn primary" id="addItemBtn">➕ Add/Update</button>
+      </div>
+      <p class="muted" style="margin-top:8px">Tip: Use <strong>New separator</strong> to insert yellow labels for grouping colours.</p>
+    </section>
+
     <section class="panel" style="margin-top:14px">
       <div class="row" style="align-items:flex-end">
-        <h3>Current stock</h3>
+        <h3 style="margin-right:8px">Current stock</h3>
         <div class="spacer"></div>
-        <button class="btn" id="addSeparator" style="display:none">New separator</button>
-        <button class="btn" id="addQuick" style="display:none">New row</button>
+        <button class="btn" id="addSeparator" title="Insert a blank separator (admin)" style="display:none">New separator</button>
+        <button class="btn" id="addQuick" title="Add a new blank row with defaults (admin)" style="display:none">New row</button>
       </div>
       <div style="overflow:auto; border-radius:12px; border:1px solid var(--line); margin-top:10px; -webkit-overflow-scrolling:touch">
         <table id="table">
           <thead>
             <tr>
-              <th>Colour</th>
-              <th>Size</th>
-              <th class="right">Qty</th>
-              <th>Brand</th>
-              <th>Style</th>
-              <th id="thNotes">Notes</th>
-              <th class="right col-actions-header" style="display:none">Actions</th>
+              <th scope="col"><span>Colour</span></th>
+              <th scope="col"><span>Size</span></th>
+              <th scope="col" class="right"><span>Qty</span></th>
+              <th scope="col"><span>Brand</span></th>
+              <th scope="col"><span>Style</span></th>
+              <th scope="col" id="thNotes"><span>Notes</span></th>
+              <th scope="col" class="right col-actions-header" style="display:none">Actions</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -114,20 +145,430 @@
       </div>
     </section>
   </main>
+
+  <!-- Edit item dialog -->
+  <dialog id="editDialog">
+    <form method="dialog">
+      <div class="row" style="justify-content:space-between; border-bottom:1px solid var(--line); padding:12px 14px; background:#f7f7f8">
+        <strong>Edit item</strong>
+        <button class="iconbtn" value="cancel" title="Close" aria-label="Close edit dialog">✖</button>
+      </div>
+      <div style="padding:14px">
+        <div class="row" style="gap:12px; flex-wrap:wrap">
+          <label>Colour<br><select id="editColor"></select></label>
+          <label>Size<br><select id="editSize"></select></label>
+          <label>Brand<br><select id="editBrand"></select></label>
+          <label>Style<br><select id="editStyle"></select></label>
+          <label>Quantity<br><input id="editQty" type="number" inputmode="numeric" min="0" /></label>
+          <label>Notes<br><input id="editNotes" placeholder="Optional note (e.g. 24)" /></label>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid var(--line); padding:12px 14px; background:#f6f8fb">
+        <button class="btn" value="cancel">Cancel</button>
+        <button class="btn primary" id="saveEditBtn" value="default">Save changes</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Login dialog (kept!) -->
+  <dialog id="loginDialog">
+    <form method="dialog" id="loginForm">
+      <div class="row" style="justify-content:space-between; border-bottom:1px solid var(--line); padding:12px 14px; background:#f7f7f8">
+        <strong>Admin login</strong>
+        <button class="iconbtn" value="cancel" title="Close" aria-label="Close login dialog">✖</button>
+      </div>
+      <div style="padding:14px">
+        <label>Password<br>
+          <input id="loginPassword" type="password" autocomplete="current-password"
+                 autocapitalize="none" autocorrect="off" inputmode="text" placeholder="••••••" />
+        </label>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid var(--line); padding:12px 14px; background:#f6f8fb">
+        <button class="btn" value="cancel">Cancel</button>
+        <button class="btn primary" id="loginSubmit" value="default">Log in</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Firebase SDKs (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+
   <script>
-    // Minimal runtime excerpt showing yellow separator and editable label
+    // ===== Firebase config — live project values =====
+    const firebaseConfig = {
+      apiKey: "AIzaSyBwXtynA-NVN6xkEFS4n5C_AXwMxDUtlJE",
+      authDomain: "tshirts-sonnys.firebaseapp.com",
+      databaseURL: "https://tshirts-sonnys-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "tshirts-sonnys",
+      storageBucket: "tshirts-sonnys.firebasestorage.app",
+      messagingSenderId: "106241030509",
+      appId: "1:106241030509:web:b546fa7eeae769f6694264"
+    };
+
+    // Initialize Firebase + anonymous auth
+    firebase.initializeApp(firebaseConfig);
+    firebase.auth().signInAnonymously().catch(err => console.error('Auth error', err));
+    const db = firebase.database();
+
+    // ===== In-memory state mirrored from Firebase =====
+    const state = {
+      sizes: ["Small","Medium","Large","XL","2XL","3XL","4XL"],
+      colors: [
+        "Black","White","Yellow (Daisy)","Yellow (Butter)","Navy","Royal Blue",
+        "Brown","Red","Cherry Red","Sports Grey","Purple","Pink",
+        "Pink (Heliconia)","Orange","Metro Blue","Green (Irish)","Green (Military)","Maroon"
+      ],
+      styles: ["standard","softstyle","mid softstyle","heavy cotton","ultra cotton"],
+      brands: ["Gildan"],
+      // items: {id,color,size,brand,style,notes,qty,order,isSeparator}
+      items: []
+    };
+
+    // Live listeners
+    const listsRef = db.ref('lists');
+    const itemsRef = db.ref('items');
+
+    listsRef.on('value', snap => {
+      const v = snap.val() || {};
+      state.sizes  = v.sizes  || state.sizes;
+      state.colors = v.colors || state.colors;
+      state.styles = v.styles || state.styles;
+      const incomingBrands = v.brands || state.brands;
+      const uniq = Array.from(new Set(incomingBrands));
+      if (!uniq.includes("Gildan")) uniq.unshift("Gildan");
+      state.brands = uniq;
+      refreshLists(); render();
+    });
+
+    // Normalize and ensure numeric order
+    itemsRef.on('value', snap => {
+      const obj = snap.val() || {};
+      let items = Object.entries(obj).map(([key, it]) => ({
+        ...it,
+        id: it?.id || key,
+        order: typeof it?.order === 'number' ? it.order : null,
+        isSeparator: !!it?.isSeparator
+      }));
+      let maxOrder = items.reduce((m,i)=>Math.max(m, Number.isFinite(i.order)?i.order:-1), -1);
+      items.forEach(i=>{ if(!Number.isFinite(i.order)){ i.order = ++maxOrder; } });
+      state.items = items.sort((a,b)=>a.order-b.order);
+      render();
+    });
+
+    // ==== Utility helpers ====
+    const $  = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+    const uid = () => Math.random().toString(36).slice(2,10);
+
+    // ==== Admin UI gate (client-side only) ====
+    const ADMIN_PASSWORD = 'sonny'; // client-only convenience; use proper Firebase rules in production
+    let isAdmin = sessionStorage.getItem('tee.admin') === '1';
+    toggleAdminUI(isAdmin);
+
+    // Login dialog wiring
+    const loginDlg = document.getElementById('loginDialog');
+    const loginPw  = document.getElementById('loginPassword');
+
+    document.getElementById('loginBtn').addEventListener('click', () => {
+      if (isAdmin){ toggleAdmin(false); return; }
+      try { loginDlg.showModal(); loginPw.focus(); }
+      catch {
+        const pw = prompt('Enter admin password');
+        if (pw === ADMIN_PASSWORD){ toggleAdmin(true); }
+        else if (pw !== null) alert('Wrong password');
+      }
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const pw = loginPw.value || '';
+      if (pw === ADMIN_PASSWORD){ loginPw.value=''; loginDlg.close(); toggleAdmin(true); }
+      else alert('Wrong password');
+    });
+
+    document.getElementById('loginSubmit').addEventListener('click', (e)=>{
+      e.preventDefault();
+      document.getElementById('loginForm').dispatchEvent(new Event('submit', {cancelable:true}));
+    });
+
+    function toggleAdmin(on){
+      isAdmin = !!on;
+      sessionStorage.setItem('tee.admin', on ? '1' : '0');
+      toggleAdminUI(isAdmin);
+    }
+
+    function toggleAdminUI(on){
+      document.getElementById('adminPanel').setAttribute('aria-hidden', on ? 'false' : 'true');
+      document.getElementById('adminPanel').style.display = on ? '' : 'none';
+      document.getElementById('loginBtn').textContent = on ? '🚪 Sign out' : '🔐 Admin';
+      document.getElementById('addQuick').style.display = on ? '' : 'none';
+      const addSepBtn = document.getElementById('addSeparator');
+      if (addSepBtn) addSepBtn.style.display = on ? '' : 'none';
+
+      const thActions = document.querySelector('.col-actions-header');
+      if (thActions) thActions.style.display = on ? '' : 'none';
+      $$('#tbody td.col-actions').forEach(td=> td.style.display = on ? '' : 'none');
+
+      render();
+    }
+
+    // ==== Populate selects (no top filters anymore) ====
+    function fillOptions(sel, values, includeBlank=true){
+      sel.innerHTML = '';
+      if (includeBlank){ const o=document.createElement('option'); o.value=''; o.textContent='—'; sel.appendChild(o); }
+      values.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; sel.appendChild(o); });
+    }
+    function refreshLists(){
+      if (!state.brands.includes('Gildan')) state.brands.unshift('Gildan');
+      fillOptions(document.getElementById('newColor'), state.colors, false);
+      fillOptions(document.getElementById('newSize'), state.sizes, false);
+      const brandSel = document.getElementById('newBrand'); brandSel.innerHTML='';
+      ['(unbranded)', ...state.brands].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; brandSel.appendChild(o); });
+      if ([...brandSel.options].some(o=>o.value==='Gildan')) brandSel.value = 'Gildan';
+      fillOptions(document.getElementById('newStyle'), state.styles, false);
+
+      fillOptions(document.getElementById('editColor'), state.colors, false);
+      fillOptions(document.getElementById('editSize'), state.sizes, false);
+      const editBrand = document.getElementById('editBrand'); editBrand.innerHTML='';
+      ['(unbranded)', ...state.brands].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; editBrand.appendChild(o); });
+      fillOptions(document.getElementById('editStyle'), state.styles, false);
+    }
+
+    // ==== Rendering (manual order only) ====
+    function render(){
+      const showNotes = document.getElementById('toggleNotes').checked;
+      const rows = [...state.items].sort((a,b)=> (a.order||0) - (b.order||0));
+
+      const tbody = document.getElementById('tbody');
+      tbody.innerHTML = rows.map(it => rowHtml(it)).join('');
+
+      document.getElementById('thNotes').style.display = showNotes ? '' : 'none';
+      $$('#tbody td.col-notes').forEach(td=> td.style.display = showNotes ? '' : 'none');
+
+      const dataRows = rows.filter(r=>!r.isSeparator);
+      const totalItems = dataRows.length;
+      const totalQty = dataRows.reduce((s,it)=>s+Number(it.qty||0),0);
+      document.getElementById('totalItems').textContent = totalItems;
+      document.getElementById('totalQty').textContent = totalQty;
+
+      $$('#tbody td.col-actions').forEach(el=> el.style.display = isAdmin ? '' : 'none');
+    }
+
     function rowHtml(it){
       if (it.isSeparator){
         const label = escapeHtml(it.notes || '— divider —');
-        const actions = `<div class="row" style="justify-content:flex-end"><button id="up-${it.id}" class="iconbtn">▲</button><button id="down-${it.id}" class="iconbtn">▼</button><button id="del-${it.id}" class="iconbtn">🗑️</button></div>`;
-        return `<tr class="sep" data-id="${it.id}"><td colspan="6"><input id="label-${it.id}" value="${label}" onchange="updateLabel('${it.id}',this.value)"></td><td class="right col-actions">${actions}</td></tr>`;
+        const actions = `
+          <div class="row" style="justify-content:flex-end">
+            <button id="up-${it.id}" class="iconbtn" title="Move up" aria-label="Move up">▲</button>
+            <button id="down-${it.id}" class="iconbtn" title="Move down" aria-label="Move down">▼</button>
+            <button id="del-${it.id}" class="iconbtn" title="Delete" aria-label="Delete">🗑️</button>
+          </div>`;
+        return `<tr class="sep" data-id="${it.id}">
+          <td colspan="6" style="text-align:center">
+            <input class="sep-label" id="label-${it.id}" value="${label}" onchange="updateSeparatorLabel('${it.id}',this.value)" />
+          </td>
+          <td class="right col-actions" style="display:${isAdmin?'':'none'}">${actions}</td>
+        </tr>`;
       }
-      return `<tr><td>${it.color}</td><td>${it.size}</td><td class="right">${it.qty}</td><td>${it.brand}</td><td>${it.style}</td><td>${it.notes||''}</td></tr>`;
+      const notesCell = `<td class="col-notes">${it.notes ? escapeHtml(it.notes) : '<span class="muted">—</span>'}</td>`;
+      const actions = `
+        <div class="row" style="justify-content:flex-end">
+          <button id="up-${it.id}" class="iconbtn" title="Move up" aria-label="Move up">▲</button>
+          <button id="down-${it.id}" class="iconbtn" title="Move down" aria-label="Move down">▼</button>
+          <button id="edit-${it.id}" class="iconbtn" title="Edit" aria-label="Edit row">✏️</button>
+          <button id="del-${it.id}" class="iconbtn" title="Delete" aria-label="Delete row">🗑️</button>
+        </div>`;
+      return `<tr data-id="${it.id}">
+        <td>${escapeHtml(it.color)}</td>
+        <td>${escapeHtml(it.size)}</td>
+        <td class="right">
+          <div class="qty">
+            ${isAdmin?`<button id="dec-${it.id}" class="iconbtn" title="Decrease" aria-label="Decrease quantity">−</button>`:''}
+            <strong>${it.qty}</strong>
+            ${isAdmin?`<button id="inc-${it.id}" class="iconbtn" title="Increase" aria-label="Increase quantity">＋</button>`:''}
+          </div>
+        </td>
+        <td>${escapeHtml(it.brand||'(unbranded)')}</td>
+        <td>${escapeHtml(it.style)}</td>
+        ${notesCell}
+        <td class="right col-actions" style="display:${isAdmin?'':'none'}">${actions}</td>
+      </tr>`;
     }
-    function updateLabel(id,val){
-      const it=state.items.find(x=>x.id===id);if(!it)return;it.notes=val;db.ref('items/'+id+'/notes').set(val);render();
+
+    // ===== CRUD helpers (write to Firebase) =====
+    function saveLists(){
+      return listsRef.set({
+        sizes: state.sizes,
+        colors: state.colors,
+        styles: state.styles,
+        brands: state.brands
+      });
     }
+
+    function upsertItem(obj){
+      const id = obj.id || uid();
+      const brand = (obj.brand ?? '').toString().trim() || 'Gildan';
+      const isSeparator = !!obj.isSeparator;
+      const order = Number.isFinite(obj.order) ? obj.order : (state.items.reduce((m,i)=>Math.max(m, Number.isFinite(i.order)?i.order:-1), -1) + 1);
+      const clean = {id, color: obj.color||'', size: obj.size||'', brand: isSeparator ? '' : brand, style: obj.style||'', qty: Number(obj.qty||0), notes: (obj.notes||''), order, isSeparator};
+      return db.ref('items/'+id).set(clean);
+    }
+
+    async function deleteItem(id, backup){
+      try { await db.ref('items/'+id).remove(); }
+      catch(err){ alert('Delete failed: '+err.message+'\nRestoring row…'); if (backup) await db.ref('items/'+id).set(backup); }
+    }
+
+    function removeItem(id){
+      const row = document.querySelector(`tr[data-id="${id}"]`);
+      if (!confirm('Delete this row?')) return;
+      if (row) row.classList.add('deleting');
+      const backup = state.items.find(x => x.id === id);
+      state.items = state.items.filter(x => x.id !== id);
+      render();
+      deleteItem(id, backup);
+    }
+
+    // Move item up/down by swapping order and persisting
+    async function moveItem(id, dir){
+      state.items = state.items.map((it, idx)=> ({...it, order: Number.isFinite(it.order)?it.order: idx}));
+      const idx = state.items.findIndex(x=>x.id===id);
+      if (idx < 0) return;
+      const swapIdx = dir < 0 ? idx-1 : idx+1;
+      if (swapIdx < 0 || swapIdx >= state.items.length) return;
+      const a = state.items[idx], b = state.items[swapIdx];
+      const aOrder = a.order, bOrder = b.order;
+      [state.items[idx], state.items[swapIdx]] = [b, a];
+      a.order = bOrder; b.order = aOrder; render();
+      try{
+        await Promise.all([
+          db.ref('items/'+a.id+'/order').set(bOrder),
+          db.ref('items/'+b.id+'/order').set(aOrder)
+        ]);
+      }catch(err){
+        alert('Move failed: ' + err.message);
+        [state.items[idx], state.items[swapIdx]] = [a, b];
+        a.order = aOrder; b.order = bOrder; render();
+      }
+    }
+
+    function addToList(listName, value){
+      const v = String(value||'').trim();
+      if (!v) return;
+      const arr = state[listName];
+      if (!arr.includes(v)) arr.push(v);
+    }
+
+    // ==== Edit dialog flow ====
+    let editingId = null;
+    const dlg = document.getElementById('editDialog');
+
+    function openEdit(id){
+      editingId = id;
+      const it = state.items.find(x=>x.id===id); if(!it) return;
+      refreshLists();
+      document.getElementById('editColor').value = it.color;
+      document.getElementById('editSize').value  = it.size;
+      document.getElementById('editBrand').value = it.brand?it.brand:'(unbranded)';
+      document.getElementById('editStyle').value = it.style;
+      document.getElementById('editQty').value   = it.qty;
+      document.getElementById('editNotes').value = it.notes||'';
+      dlg.showModal();
+    }
+
+    document.getElementById('saveEditBtn').addEventListener('click', (e)=>{
+      e.preventDefault();
+      if (!editingId) return dlg.close();
+      const it = state.items.find(x=>x.id===editingId); if(!it) return;
+      const color = document.getElementById('editColor').value;
+      const size  = document.getElementById('editSize').value;
+      const brandSel = document.getElementById('editBrand').value;
+      const brand = brandSel==='(unbranded)'? '' : brandSel || 'Gildan';
+      const style = document.getElementById('editStyle').value;
+      const qty   = Math.max(0, Number(document.getElementById('editQty').value||0));
+      const notes = document.getElementById('editNotes').value.trim();
+      upsertItem({...it, color, size, brand, style, qty, notes});
+      addToList('colors', color);
+      addToList('sizes',  size);
+      addToList('styles', style);
+      if (brand.trim()) addToList('brands', brand);
+      saveLists();
+      editingId = null; dlg.close();
+    });
+
+    dlg.addEventListener('close', ()=>{ editingId = null; });
+
+    // ==== Event delegation (incl. move up/down) ====
+    const tbodyEl = document.getElementById('tbody');
+    tbodyEl.addEventListener('click', (e)=>{
+      const btn = e.target.closest('button'); if(!btn) return;
+      if (!isAdmin && (btn.id?.startsWith('inc-') || btn.id?.startsWith('dec-') || btn.id?.startsWith('del-') || btn.id?.startsWith('edit-') || btn.id?.startsWith('up-') || btn.id?.startsWith('down-'))) {
+        alert('Admin only'); return;
+      }
+      if (btn.id?.startsWith('inc-')) { adjQty(btn.id.slice(4), +1); }
+      else if (btn.id?.startsWith('dec-')) { adjQty(btn.id.slice(4), -1); }
+      else if (btn.id?.startsWith('del-')) { removeItem(btn.id.slice(4)); }
+      else if (btn.id?.startsWith('edit-')) { openEdit(btn.id.slice(5)); }
+      else if (btn.id?.startsWith('up-')) { moveItem(btn.id.slice(3), -1); }
+      else if (btn.id?.startsWith('down-')) { moveItem(btn.id.slice(5), +1); }
+    }, {passive:false});
+
+    // Quantity adjust
+    function adjQty(id, delta){
+      const it = state.items.find(x=>x.id===id); if(!it) return;
+      const next = Math.max(0, Number(it.qty||0) + delta);
+      db.ref('items/'+id+'/qty').set(next);
+    }
+
+    // Separator label updater
+    window.updateSeparatorLabel = function(id,val){
+      const it=state.items.find(x=>x.id===id); if(!it) return; it.notes=val; db.ref('items/'+id+'/notes').set(val); render();
+    }
+
+    // Admin actions
+    document.getElementById('addItemBtn').addEventListener('click', ()=>{
+      if (!isAdmin) return alert('Admin only');
+      const color = document.getElementById('newColor').value;
+      const size  = document.getElementById('newSize').value;
+      const brandSel = document.getElementById('newBrand').value;
+      const brand = brandSel === '(unbranded)' ? '' : (brandSel || 'Gildan');
+      const style = document.getElementById('newStyle').value;
+      const qty   = Number(document.getElementById('newQty').value||0);
+
+      const key = x=> `${x.color}|${x.size}|${x.brand}|${x.style}`;
+      const existing = state.items.find(x=> key(x)===`${color}|${size}|${brand}|${style}`);
+      if (existing){ upsertItem({...existing, qty}); }
+      else upsertItem({id:uid(), color, size, brand, style, qty});
+
+      addToList('colors', color);
+      addToList('sizes',  size);
+      if(brand.trim()) addToList('brands', brand);
+      addToList('styles', style);
+      saveLists();
+
+      document.getElementById('newQty').value = 0;
+    });
+
+    document.getElementById('addQuick').addEventListener('click', ()=>{
+      if (!isAdmin) return alert('Admin only');
+      const def = {color: state.colors[0], size: state.sizes[0], brand: 'Gildan', style: state.styles[0], notes:'', qty:0};
+      upsertItem({id:uid(), ...def});
+    });
+
+    document.getElementById('addSeparator').addEventListener('click', ()=>{
+      if (!isAdmin) return alert('Admin only');
+      upsertItem({id:uid(), isSeparator:true, qty:0, notes:'— divider —'});
+    });
+
+    // Re-render on notes toggle only
+    document.getElementById('toggleNotes').addEventListener('change', render);
+
+    // Initial paint
+    refreshLists();
+    render();
+
   </script>
 </body>
 </html>
-
