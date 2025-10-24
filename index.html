@@ -84,7 +84,7 @@
     body.hide-notes th:nth-child(6),
     body.hide-notes td.col-notes { display:none; }
 
-    /* ===== Phone-only compact tweaks (fit like before) ===== */
+    /* ===== Phone baseline compact (applies to everyone) ===== */
     @media (max-width: 420px){
       header .wrap{ padding:10px 12px; }
       .panel{ padding:10px; }
@@ -93,62 +93,8 @@
       #toggleNotes{ width:14px; height:14px; }
     }
 
-    /* ===== Compact layout when Admin mode is active ===== */
-    body.admin header .wrap { padding: 8px 10px; }
-    body.admin #adminPanel { padding: 8px 10px; }
-    body.admin #adminPanel .row { gap: 6px !important; }
-    body.admin #adminPanel select,
-    body.admin #adminPanel input,
-    body.admin #adminPanel .btn {
-      min-height: 34px;
-      padding: 6px 8px;
-      font-size: 14px;
-    }
-
-    /* ===== Admin mode on small phones: tighter but still finger-safe ===== */
-    @media (max-width: 420px){
-      body.admin header .wrap{ padding:6px 8px; }
-      body.admin .panel{ padding:8px; }
-      body.admin #adminPanel .row{ gap:6px !important; }
-      body.admin #adminPanel select,
-      body.admin #adminPanel input,
-      body.admin #adminPanel .btn{
-        min-height:34px;
-        padding:6px 8px;
-        font-size:13px;
-      }
-      body.admin .iconbtn{ width:32px; height:32px; }
-      body.admin .qty .iconbtn{ width:28px; height:28px; }
-      body.admin th, body.admin td{ padding:8px; }
-      body.admin h1{ font-size:20px; }
-      body.admin label.btn.ghost:has(#toggleNotes){
-        padding:4px 6px; font-size:12px; min-height:auto;
-      }
-    }
-
-    /* ===== Admin-on-phone: slimmer table rows (≈2 lines tall) ===== */
-    @media (max-width: 420px){
-      body.admin #table th,
-      body.admin #table td{
-        padding:6px 8px;
-        line-height:1.2;
-        vertical-align:middle;
-        white-space:normal;
-        word-break:break-word;
-      }
-      body.admin #table .iconbtn{
-        width:28px; height:28px; border-radius:8px; padding:0;
-      }
-      body.admin #table .qty .iconbtn{
-        width:26px; height:26px;
-      }
-      body.admin #table .qty{ gap:6px; }
-      body.admin #table td.right strong{ line-height:1.0; }
-      body.admin tr.separator td{
-        padding-top:3px;
-        padding-bottom:3px;
-      }
-    }
+    /* NOTE: No admin-specific phone padding overrides.
+       Admin on phone now uses the DEFAULT padding above. */
   </style>
 </head>
 <body>
@@ -376,7 +322,7 @@
     }
 
     function toggleAdminUI(on){
-      document.body.classList.toggle('admin', on); // compact mode when admin
+      // No admin-specific CSS class anymore; default padding applies on phone
       document.getElementById('adminPanel').setAttribute('aria-hidden', on ? 'false' : 'true');
       document.getElementById('adminPanel').style.display = on ? '' : 'none';
       document.getElementById('loginBtn').textContent = on ? '🚪 Sign out' : '🔐 Admin';
@@ -409,6 +355,7 @@
       fillBrandSelect(document.getElementById('newBrand'));  // includes (unbranded)
       if ([...document.getElementById('newBrand').options].some(o=>o.value==='Gildan')) document.getElementById('newBrand').value = 'Gildan';
       fillOptions(document.getElementById('newStyle'), state.styles, false);
+      // Default to heavy cotton
       if ([...document.getElementById('newStyle').options].some(o=>o.value==='heavy cotton')) document.getElementById('newStyle').value = 'heavy cotton';
 
       // Edit selects
@@ -506,7 +453,8 @@
     }
 
     function deleteItem(id){
-      return db.ref('items/'+id).remove().then(()=> console.log('Deleted', id));
+      return db.ref('items/'+id).remove()
+        .then(()=> console.log('Deleted', id));
     }
 
     function removeItem(id){
