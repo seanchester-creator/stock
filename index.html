@@ -398,6 +398,8 @@
     }
     function refreshLists(){
       if (!state.brands.includes("Gildan")) state.brands.unshift("Gildan");
+
+      // Default styles with “soft style” label
       state.styles = state.styles.map(s => s === 'softstyle' ? 'soft style' : s);
       if (!state.styles.includes('heavy cotton')) state.styles.push('heavy cotton');
 
@@ -504,8 +506,7 @@
     }
 
     function deleteItem(id){
-      return db.ref('items/'+id).remove()
-        .then(()=> console.log('Deleted', id));
+      return db.ref('items/'+id).remove().then(()=> console.log('Deleted', id));
     }
 
     function removeItem(id){
@@ -539,9 +540,178 @@
     }
 
     function swapOrd(idA, idB){
-      const a = state.items.find i => i.id===idA;
+      const a = state.items.find(i=>i.id===idA);
+      const b = state.items.find(i=>i.id===idB);
+      if (!a || !b) return;
+      const oa = a.ord ?? 0;
+      const ob = b.ord ?? 0;
+      // Optimistic UI
+      a.ord = ob; b.ord = oa;
+      render();
+      // Persist
+      const pa = db.ref('items/'+a.id+'/ord').set(ob);
+      const pb = db.ref('items/'+b.id+'/ord').set(oa);
+      Promise.all([pa,pb]).catch(err=>{
+        alert('Reorder failed: ' + err.message);
+      });
     }
+
+    function move(id, dir){ // dir: -1 up, +1 down
+      const ordered = [...state.items].sort((a,b)=>(a.ord??0)-(b.ord??0));
+      const idx = ordered.findIndex(i=>i.id===id);
+      if (idx < 0) return;
+      const swapIdx = idx + dir;
+      if (swapIdx < 0 || swapIdx >= ordered.length) return;
+      swapOrd(ordered[idx].id, ordered[swapIdx].id);
+    }
+
+    // ==== Edit dialog flow ====
+    let editingId = null;
+    const dlg = document.getElementById('editDialog');
+
+    function openEdit(id){
+      editingId = id;
+      const it = state.items.find(x=>x.id===id); if(!it) return;
+      if (it.separator){
+        const label = prompt('Separator label (optional):', it.label || '');
+        if (label !== null){
+          db.ref('items/'+id+'/label').set(label);
+        }
+        editingId = null;
+        return;
+      }
+      refreshLists();
+      document.getElementById('editColor').value = it.color || state.colors[0] || '';
+      document.getElementById('editSize').value  = it.size  || state.sizes[0]  || '';
+      document.getElementById('editBrand').value = it.brand ? it.brand : '(unbranded)';
+      document.getElementById('editStyle').value = it.style || 'heavy cotton';
+      document.getElementById('editQty').value   = it.qty ?? 0;
+      document.getElementById('editNotes').value = it.notes||'';
+      dlg.showModal();
+    }
+
+    document.getElementById('saveEditBtn').addEventListener('click', (e)=>{
+      e.preventDefault();
+      if (!editingId) return dlg.close();
+      const it = state.items.find(x=>x.id===editingId); if(!it) return;
+      const color = document.getElementById('editColor').value;
+      const size  = document.getElementById('editSize').value;
+      const brandSel = document.getElementById('editBrand').value;
+      const brand = brandSel==='(unbranded)'? '' : brandSel || 'Gildan';
+      const style = (document.getElementById('editStyle').value === 'softstyle') ? 'soft style' : (document.getElementById('editStyle').value || 'heavy cotton');
+      const qty   = Math.max(0, Number(document.getElementById('editQty').value||0));
+      const notes = document.getElementById('editNotes').value.trim();
+      upsertItem({...it, color, size, brand, style, qty, notes});
+      addToList('colors', color);
+      addToList('sizes',  size);
+      addToList('styles', style);
+      if (brand.trim()) addToList('brands', brand);
+      saveLists();
+      editingId = null; dlg.close();
+    });
+
+    dlg.addEventListener('close', ()=>{ editingId = null; });
+
+    function addToList(listName, value){
+      const v = String(value||'').trim();
+      if (!v) return;
+      const arr = state[listName];
+      if (!arr.includes(v)) arr.push(v);
+    }
+
+    // ==== Admin actions ====
+    document.getElementById('addItemBtn').addEventListener('click', ()=>{
+      if (!isAdmin) return alert('Admin only');
+      const color = document.getElementById('newColor').value;
+      const size  = document.getElementById('newSize').value;
+      const brandSel = document.getElementById('newBrand').value;
+      const brand = brandSel === '(unbranded)' ? '' : (brandSel || 'Gildan');
+      const style = (document.getElementById('newStyle').value || 'heavy cotton');
+      const qty   = Number(document.getElementById('newQty').value||0);
+
+      const key = x=> `${x.color}|${x.size}|${x.brand}|${x.style}`;
+      const existing = state.items.find(x=> !x.separator && key(x)===`${color}|${size}|${brand}|${style}`);
+      if (existing){ upsertItem({...existing, qty}); }
+      else upsertItem({id:uid(), color, size, brand, style, qty, ord: nextOrd()});
+
+      addToList('colors', color);
+      addToList('sizes',  size);
+      if(brand.trim()) addToList('brands', brand);
+      addToList('styles', style);
+      saveLists();
+
+      document.getElementById('newQty').value = 0;
+    });
+
+    document.getElementById('addQuick').addEventListener('click', ()=>{
+      if (!isAdmin) return alert('Admin only');
+      const def = {color: state.colors[0]||'', size: state.sizes[0]||'', brand: 'Gildan', style: 'heavy cotton', notes:'', qty:0, ord: nextOrd()};
+      upsertItem({id:uid(), ...def});
+    });
+
+    document.getElementById('addSeparatorBtn').addEventListener('click', ()=>{
+      if (!isAdmin) return alert('Admin only');
+      const label = prompt('Optional label for this separator (e.g. "Darks", "Yellows"):', '');
+      const sep = { id: uid(), separator:true, label: label||'', qty:0, ord: nextOrd() };
+      db.ref('items/'+sep.id).set(sep);
+    });
+
+    document.getElementById('addColorBtn')?.addEventListener('click', ()=>{
+      if (!isAdmin) return alert('Admin only');
+      const v=document.getElementById('addColor').value.trim(); if(!v) return;
+      addToList('colors',v); document.getElementById('addColor').value=''; saveLists();
+    });
+    document.getElementById('addSizeBtn')?.addEventListener('click', ()=>{
+      if (!isAdmin) return alert('Admin only');
+      const v=document.getElementById('addSize').value.trim(); if(!v) return;
+      addToList('sizes',v); document.getElementById('addSize').value=''; saveLists();
+    });
+    document.getElementById('addBrandBtn')?.addEventListener('click', ()=>{
+      if (!isAdmin) return alert('Admin only');
+      const v=document.getElementById('addBrand').value.trim(); if(!v) return;
+      addToList('brands',v); document.getElementById('addBrand').value=''; saveLists();
+    });
+    document.getElementById('addStyleBtn')?.addEventListener('click', ()=>{
+      if (!isAdmin) return alert('Admin only');
+      const v=document.getElementById('addStyle').value.trim(); if(!v) return;
+      const val = v === 'softstyle' ? 'soft style' : v;
+      addToList('styles',val); document.getElementById('addStyle').value=''; saveLists();
+    });
+
+    // ==== Event delegation for ALL actions (incl reorder) ====
+    const tbodyEl = document.getElementById('tbody');
+    tbodyEl.addEventListener('click', (e)=>{
+      const btn = e.target.closest('button'); if(!btn) return;
+
+      if (!isAdmin && /^(inc-|dec-|del-|edit-|up-|down-|editsep-)/.test(btn.id)) {
+        alert('Admin only'); return;
+      }
+
+      if (btn.id?.startsWith('inc-')) { adjQty(btn.id.slice(4), +1); }
+      else if (btn.id?.startsWith('dec-')) { adjQty(btn.id.slice(4), -1); }
+      else if (btn.id?.startsWith('del-')) { removeItem(btn.id.slice(4)); }
+      else if (btn.id?.startsWith('editsep-')) { openEdit(btn.id.slice(8)); }
+      else if (btn.id?.startsWith('edit-')) { openEdit(btn.id.slice(5)); }
+      else if (btn.id?.startsWith('up-')) { move(btn.id.slice(3), -1); }
+      else if (btn.id?.startsWith('down-')) { move(btn.id.slice(5), +1); }
+    }, {passive:false});
+
+    // ==== Initial paint ====
+    refreshLists();
+    render();
+
+    // Notes column toggle (remembers per session)
+    const SHOW_NOTES_KEY = 'tee.showNotes';
+    const toggleNotesEl = document.getElementById('toggleNotes');
+    const showNotes = sessionStorage.getItem(SHOW_NOTES_KEY) === '1';
+    document.body.classList.toggle('hide-notes', !showNotes);
+    if (toggleNotesEl) toggleNotesEl.checked = showNotes;
+
+    toggleNotesEl?.addEventListener('change', (e)=>{
+      const on = !!e.target.checked;
+      document.body.classList.toggle('hide-notes', !on);
+      sessionStorage.setItem(SHOW_NOTES_KEY, on ? '1' : '0');
+    });
   </script>
 </body>
 </html>
-
