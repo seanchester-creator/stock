@@ -8,121 +8,179 @@
   <meta name="theme-color" content="#e5f0ff" />
   <title>T-Shirt Stock List</title>
   <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #fff;
+      --ink: #222;
+      --muted: #6b7280;
+      --brand: #2563eb;
+      --brand-hover: #1d4ed8;
+      --line: #e5e7eb;
+    }
+    * { box-sizing: border-box; }
     body {
-      font-family: system-ui, sans-serif;
-      background-color: #f8fafc;
-      color: #222;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+      background-color: var(--bg);
+      color: var(--ink);
       margin: 0;
-      padding: 0;
     }
     header {
       background: #e5f0ff;
       padding: 1rem;
       text-align: center;
-      font-weight: bold;
+      font-weight: 700;
       font-size: 1.5rem;
     }
     #app {
-      max-width: 900px;
+      max-width: 1000px;
       margin: 2rem auto;
       padding: 1rem;
-      background: #fff;
+      background: var(--card);
       border-radius: 1rem;
       box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
-    .hidden { display: none; }
+    .hidden { display: none !important; }
+    .login-area {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .muted { color: var(--muted); }
+    button {
+      background: var(--brand);
+      color: white;
+      border: none;
+      padding: 0.5rem 0.9rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover { background: var(--brand-hover); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--brand);
+      border: 1px solid var(--brand);
+    }
+    input, select {
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      min-width: 0;
+    }
+    .form {
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      margin: 1rem 0;
+    }
+    .form .field {
+      display: grid;
+      gap: 0.35rem;
+    }
+    .row-span-2 { grid-row: span 2; }
     .inventory-table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 1rem;
     }
     .inventory-table th, .inventory-table td {
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid var(--line);
       text-align: left;
-      padding: 0.5rem;
+      padding: 0.6rem 0.4rem;
+      vertical-align: top;
     }
-    .login-area {
-      text-align: right;
-      margin-bottom: 1rem;
-    }
-    button {
-      background: #2563eb;
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
+    #error-bar {
+      display: none;
+      background: #fee2e2;
+      color: #7f1d1d;
+      border: 1px solid #fecaca;
+      padding: 0.75rem;
       border-radius: 8px;
-      cursor: pointer;
+      margin-bottom: 1rem;
+      white-space: pre-wrap;
     }
-    button:hover { background: #1d4ed8; }
-    input, select {
-      padding: 0.5rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    .form-row {
+    .table-actions {
       display: flex;
       gap: 0.5rem;
-      margin-bottom: 0.5rem;
       flex-wrap: wrap;
     }
-    .form-row label {
-      font-weight: 500;
-    }
-    .measurement-fields.hidden {
-      display: none;
+    .note {
+      font-size: 0.9rem;
+      color: var(--muted);
     }
   </style>
 </head>
 <body>
   <header>T-Shirt Stock Inventory</header>
   <div id="app">
+    <div id="error-bar"></div>
+
     <div class="login-area">
-      <span id="user-status">Not logged in</span>
-      <button id="login-btn">Login</button>
-      <button id="logout-btn" class="hidden">Logout</button>
+      <div>
+        <div id="user-status" class="muted">Checking sign-in…</div>
+        <div class="note">Viewing is open to everyone. Adding/editing requires sign-in.</div>
+      </div>
+      <div>
+        <button id="login-btn">Login</button>
+        <button id="logout-btn" class="hidden">Logout</button>
+      </div>
     </div>
 
-    <form id="add-shirt-form" class="hidden">
-      <div class="form-row">
-        <label>Name:</label>
-        <input id="shirt-name" placeholder="T-shirt name" required />
-      </div>
-      <div class="form-row">
-        <label>Color:</label>
-        <select id="shirt-color">
-          <option>Black</option>
-          <option>White</option>
-          <option>Blue</option>
-          <option>Red</option>
-          <option>Green</option>
-          <option>Yellow</option>
-          <option>Grey</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <label>Quantity:</label>
-        <input id="shirt-qty" type="number" min="0" />
-      </div>
-      <div class="form-row">
-        <label><input type="checkbox" id="show-measurements" /> Add measurements</label>
-      </div>
-      <div id="measurements-section" class="measurement-fields hidden">
-        <div class="form-row">
-          <label>Chest (in):</label>
-          <input id="measure-chest" type="number" step="0.1" />
+    <!-- Add / Edit form (shown when logged in) -->
+    <form id="shirt-form" class="hidden" autocomplete="off">
+      <div class="form">
+        <div class="field">
+          <label for="shirt-name"><strong>Name</strong></label>
+          <input id="shirt-name" placeholder="T-shirt name" required />
         </div>
-        <div class="form-row">
-          <label>Length (in):</label>
-          <input id="measure-length" type="number" step="0.1" />
+        <div class="field">
+          <label for="shirt-color"><strong>Color</strong></label>
+          <select id="shirt-color">
+            <option>Black</option>
+            <option>White</option>
+            <option>Blue</option>
+            <option>Red</option>
+            <option>Green</option>
+            <option>Yellow</option>
+            <option>Grey</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="shirt-qty"><strong>Quantity</strong></label>
+          <input id="shirt-qty" type="number" min="0" value="0" />
+        </div>
+
+        <div class="field">
+          <label><strong><input type="checkbox" id="show-measurements" /> Add measurements</strong></label>
+          <div id="measurements-section" class="hidden">
+            <div style="display:grid; gap:0.4rem; grid-template-columns: repeat(2,1fr);">
+              <div class="field">
+                <label for="measure-chest">Chest (in)</label>
+                <input id="measure-chest" type="number" step="0.1" />
+              </div>
+              <div class="field">
+                <label for="measure-length">Length (in)</label>
+                <input id="measure-length" type="number" step="0.1" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field row-span-2">
+          <label for="shirt-notes"><strong>Notes</strong></label>
+          <input id="shirt-notes" placeholder="Optional notes" />
         </div>
       </div>
-      <div class="form-row">
-        <label>Notes:</label>
-        <input id="shirt-notes" placeholder="Optional notes" />
+
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <button type="submit" id="submit-btn">Add / Update Shirt</button>
+        <button type="button" id="cancel-edit-btn" class="btn-ghost hidden">Cancel edit</button>
       </div>
-      <button type="submit">Add / Update Shirt</button>
     </form>
 
+    <!-- Inventory -->
     <table class="inventory-table" id="inventory-table">
       <thead>
         <tr>
@@ -134,15 +192,31 @@
           <th id="actions-header" class="hidden">Actions</th>
         </tr>
       </thead>
-      <tbody id="inventory-body"></tbody>
+      <tbody id="inventory-body">
+        <!-- rows injected -->
+      </tbody>
     </table>
+
+    <p class="note" style="margin-top:0.75rem;">Sorted alphabetically by name.</p>
   </div>
 
   <script type="module">
+    // --- Simple on-page error surfacing ---
+    const errorBar = document.getElementById('error-bar');
+    function showError(err) {
+      errorBar.style.display = 'block';
+      errorBar.textContent = String(err?.message || err);
+      console.error(err);
+    }
+    window.addEventListener('error', (e) => showError(e.error || e.message));
+    window.addEventListener('unhandledrejection', (e) => showError(e.reason || e));
+
+    // --- Firebase (ESM CDN) ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, remove, onValue, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+    // Replace ONLY if your project values differ:
     const firebaseConfig = {
       apiKey: "AIzaSyBwXtynA-NVN6xkEFS4n5C_AXwMxDUtlJE",
       authDomain: "tshirts-sonnys.firebaseapp.com",
@@ -158,107 +232,206 @@
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
 
-    const adminEmails = ["youremail@example.com"]; // <---- add your admin email(s) here
+    // --- Admin emails: add yours here ---
+    const adminEmails = ["youremail@example.com"];
 
+    // --- UI refs ---
     const loginBtn = document.getElementById("login-btn");
     const logoutBtn = document.getElementById("logout-btn");
     const userStatus = document.getElementById("user-status");
-    const form = document.getElementById("add-shirt-form");
-    const tableBody = document.getElementById("inventory-body");
+    const form = document.getElementById("shirt-form");
+    const submitBtn = document.getElementById("submit-btn");
+    const cancelEditBtn = document.getElementById("cancel-edit-btn");
+
+    const nameInput = document.getElementById("shirt-name");
+    const colorInput = document.getElementById("shirt-color");
+    const qtyInput = document.getElementById("shirt-qty");
+    const notesInput = document.getElementById("shirt-notes");
     const showMeasurements = document.getElementById("show-measurements");
     const measurementsSection = document.getElementById("measurements-section");
+    const chestInput = document.getElementById("measure-chest");
+    const lengthInput = document.getElementById("measure-length");
+
+    const tableBody = document.getElementById("inventory-body");
     const actionsHeader = document.getElementById("actions-header");
 
+    // --- State ---
     let isAdmin = false;
+    let currentUser = null;
 
-    loginBtn.onclick = () => signInWithPopup(auth, provider);
-    logoutBtn.onclick = () => signOut(auth);
+    // Edit mode state
+    let isEditing = false;
+    let originalKey = null; // original DB key (before rename)
+
+    // Helpers
+    const keyFromName = (name) =>
+      name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+    function resetForm() {
+      form.reset();
+      measurementsSection.classList.add("hidden");
+      showMeasurements.checked = false;
+      isEditing = false;
+      originalKey = null;
+      submitBtn.textContent = "Add / Update Shirt";
+      cancelEditBtn.classList.add("hidden");
+    }
+
+    function fillFormFromItem(item) {
+      nameInput.value = item.name || "";
+      colorInput.value = item.color || "Black";
+      qtyInput.value = item.qty ?? 0;
+      notesInput.value = item.notes || "";
+      const m = item.measurements || null;
+      showMeasurements.checked = !!m;
+      measurementsSection.classList.toggle("hidden", !m);
+      chestInput.value = m?.chest ?? "";
+      lengthInput.value = m?.length ?? "";
+    }
+
+    // Auth UI
+    loginBtn.onclick = () => signInWithPopup(auth, provider).catch(showError);
+    logoutBtn.onclick = () => signOut(auth).catch(showError);
 
     onAuthStateChanged(auth, (user) => {
+      currentUser = user;
       if (user) {
-        userStatus.textContent = `Logged in as ${user.displayName}`;
+        userStatus.textContent = `Logged in as ${user.displayName || user.email}`;
         loginBtn.classList.add("hidden");
         logoutBtn.classList.remove("hidden");
         form.classList.remove("hidden");
-
-        isAdmin = adminEmails.includes(user.email);
+        isAdmin = adminEmails.includes(user.email || "");
         actionsHeader.classList.toggle("hidden", !isAdmin);
-
-        loadInventory();
       } else {
         userStatus.textContent = "Not logged in";
         loginBtn.classList.remove("hidden");
         logoutBtn.classList.add("hidden");
         form.classList.add("hidden");
+        isAdmin = false;
         actionsHeader.classList.add("hidden");
-        tableBody.innerHTML = "";
+        resetForm();
       }
+      // Re-render rows so action buttons appear/disappear immediately
+      renderCached();
     });
 
     showMeasurements.addEventListener("change", () => {
       measurementsSection.classList.toggle("hidden", !showMeasurements.checked);
     });
 
-    form.addEventListener("submit", (e) => {
+    // Submit (Add or Save)
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const name = document.getElementById("shirt-name").value.trim();
-      const color = document.getElementById("shirt-color").value;
-      const qty = document.getElementById("shirt-qty").value;
-      const notes = document.getElementById("shirt-notes").value;
-      const chest = document.getElementById("measure-chest").value;
-      const length = document.getElementById("measure-length").value;
-      const showM = showMeasurements.checked;
+      try {
+        const name = nameInput.value.trim();
+        if (!name) return;
 
-      const shirtData = {
-        name,
-        color,
-        qty,
-        notes,
-        measurements: showM ? { chest, length } : null
-      };
+        const color = colorInput.value;
+        const qty = Number(qtyInput.value || 0);
+        const notes = notesInput.value.trim();
+        const m =
+          showMeasurements.checked
+            ? {
+                chest: chestInput.value ? Number(chestInput.value) : "",
+                length: lengthInput.value ? Number(lengthInput.value) : "",
+              }
+            : null;
 
-      set(ref(db, "tshirts/" + name), shirtData);
-      form.reset();
-      measurementsSection.classList.add("hidden");
+        const newKey = keyFromName(name);
+        if (!newKey) throw new Error("Name produces an empty key. Please use letters/numbers.");
+
+        const data = { name, color, qty, notes, measurements: m };
+
+        if (isEditing && originalKey && originalKey !== newKey) {
+          // Rename: remove old key, set new key
+          await remove(ref(db, "tshirts/" + originalKey));
+          await set(ref(db, "tshirts/" + newKey), data);
+        } else {
+          await set(ref(db, "tshirts/" + (isEditing ? originalKey : newKey)), data);
+        }
+
+        resetForm();
+      } catch (err) {
+        showError(err);
+      }
     });
 
-    function loadInventory() {
-      onValue(ref(db, "tshirts"), (snapshot) => {
-        const data = snapshot.val();
-        tableBody.innerHTML = "";
-        if (!data) return;
+    cancelEditBtn.addEventListener("click", resetForm);
 
-        const shirts = Object.values(data).sort((a, b) =>
-          a.name.localeCompare(b.name)
-        );
+    // --- Inventory subscription (visible to everyone) ---
+    let cache = {}; // cache latest snapshot for re-rendering on auth changes
 
-        shirts.forEach((shirt) => {
-          const row = document.createElement("tr");
-          const m = shirt.measurements;
-          row.innerHTML = `
-            <td>${shirt.name}</td>
-            <td>${shirt.color}</td>
-            <td>${shirt.qty || 0}</td>
-            <td>${m ? `Chest: ${m.chest || "-"} | Length: ${m.length || "-"}` : ""}</td>
-            <td>${shirt.notes || ""}</td>
-            ${isAdmin ? `<td><button data-name="${shirt.name}" class="delete-btn">Delete</button></td>` : ""}
-          `;
-          tableBody.appendChild(row);
+    onValue(ref(db, "tshirts"), (snapshot) => {
+      cache = snapshot.val() || {};
+      renderCached();
+    }, showError);
+
+    function renderCached() {
+      tableBody.innerHTML = "";
+      const items = Object.entries(cache).map(([key, val]) => ({ key, ...val }));
+      items.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+      for (const item of items) {
+        const tr = document.createElement("tr");
+        const m = item.measurements;
+
+        tr.innerHTML = `
+          <td>${escapeHtml(item.name || "")}</td>
+          <td>${escapeHtml(item.color || "")}</td>
+          <td>${Number(item.qty || 0)}</td>
+          <td>${m ? `Chest: ${m.chest ?? "-"} | Length: ${m.length ?? "-"}` : ""}</td>
+          <td>${escapeHtml(item.notes || "")}</td>
+          ${isAdmin ? `<td class="table-actions">
+              <button class="btn-ghost" data-act="edit" data-key="${item.key}">Edit</button>
+              <button data-act="del" data-key="${item.key}">Delete</button>
+            </td>` : ""}
+        `;
+        tableBody.appendChild(tr);
+      }
+
+      if (isAdmin) {
+        tableBody.querySelectorAll('button[data-act="del"]').forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            try {
+              const key = btn.getAttribute("data-key");
+              await remove(ref(db, "tshirts/" + key));
+              if (isEditing && originalKey === key) resetForm();
+            } catch (err) { showError(err); }
+          });
         });
 
-        if (isAdmin) {
-          document.querySelectorAll(".delete-btn").forEach((btn) => {
-            btn.addEventListener("click", () => {
-              const name = btn.getAttribute("data-name");
-              remove(ref(db, "tshirts/" + name));
-            });
+        tableBody.querySelectorAll('button[data-act="edit"]').forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            try {
+              const key = btn.getAttribute("data-key");
+              const snap = await get(child(ref(db), "tshirts/" + key));
+              if (!snap.exists()) throw new Error("Item not found.");
+              const item = snap.val();
+              fillFormFromItem(item);
+              isEditing = true;
+              originalKey = key;
+              submitBtn.textContent = "Save changes";
+              cancelEditBtn.classList.remove("hidden");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            } catch (err) { showError(err); }
           });
-        }
-      });
+        });
+      }
+    }
+
+    // simple HTML escaper
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
     }
   </script>
 </body>
 </html>
+
 
 
 
